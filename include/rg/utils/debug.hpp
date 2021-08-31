@@ -19,8 +19,6 @@ namespace rg {
     const char *openGLErrorToString(GLenum error);
 
     bool wasPreviousOpenGLCallSuccessful(const char *file, int line, const char *call);
-
-    std::string readFileContents(std::string path);
 }
 
 #endif //MATF_RG_PROJEKAT_COMMON_HPP

@@ -23,6 +23,7 @@ namespace rg {
         void setKeyCallback(GLFWkeyfun cb);
 
         bool shouldClose() const;
+//        void setShouldClose(bool shouldClose);
 
         void swapBuffers() const;
 

@@ -1,12 +1,10 @@
-#include <iostream>
-#include <cmath>
-
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
 #include <rg/Shader.hpp>
 #include <rg/Texture2D.hpp>
 #include <rg/Window.hpp>
+#include <rg/utils/utils.hpp>
 
 void framebufferSizeCallback(GLFWwindow *window, int width, int height);
 
@@ -21,10 +19,7 @@ int main() {
     window.setFramebufferSizeCallback(framebufferSizeCallback);
     window.setKeyCallback(keyCallback);
 
-    if (!gladLoadGLLoader((GLADloadproc) glfwGetProcAddress)) {
-        std::cout << "Failed to init GLAD" << std::endl;
-        return EXIT_FAILURE;
-    }
+    rg::loadGlad();
 
     rg::Shader shader("resources/shaders/vertexShader.vs", "resources/shaders/fragmentShader.fs");
 

@@ -1,9 +1,11 @@
+#include <utility>
+
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
 #include <rg/Shader.hpp>
+#include <rg/utils/utils.hpp>
 #include <rg/utils/debug.hpp>
-#include <utility>
 
 namespace rg {
     Shader::Shader(std::string vertexShaderPath, std::string fragmentShaderPath) {

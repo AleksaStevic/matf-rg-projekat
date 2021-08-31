@@ -3,12 +3,8 @@
 //
 
 #include <iostream>
-#include <string>
-#include <fstream>
-#include <sstream>
 
 #include <glad/glad.h>
-#include <GLFW/glfw3.h>
 
 #include <rg/utils/debug.hpp>
 
@@ -51,11 +47,4 @@ namespace rg {
         }
 
     };
-
-    std::string readFileContents(std::string path) {
-        std::ifstream in(path);
-        std::stringstream buffer;
-        buffer << in.rdbuf();
-        return buffer.str();
-    }
 }
