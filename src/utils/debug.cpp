@@ -3,47 +3,59 @@
 //
 
 #include <iostream>
+#include <string>
+#include <fstream>
+#include <sstream>
+
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
-#include "../include/rg/utils/debug.hpp"
+#include <rg/utils/debug.hpp>
 
 namespace rg {
-    void glClearError() {
-        while (glGetError() != GL_NO_ERROR) {}
-    }
+    namespace rg {
 
-    const char *glErrorToString(GLenum error) {
-        switch (error) {
-            case GL_NO_ERROR:
-                return "GL_NO_ERROR";
-            case GL_INVALID_ENUM:
-                return "GL_INVALID_ENUM";
-            case GL_INVALID_VALUE:
-                return "GL_INVALID_VALUE";
-            case GL_INVALID_OPERATION:
-                return "GL_INVALID_OPERATION";
-            case GL_INVALID_FRAMEBUFFER_OPERATION:
-                return "GL_INVALID_FRAMEBUFFER_OPERATION";
-            case GL_OUT_OF_MEMORY:
-                return "GL_OUT_OF_MEMORY";
-            default: {
-                std::cerr << "Unknown error." << std::endl;
-                return "Unknown error.";
+        void clearAllOpenGlErrors() {
+            while (glGetError() != GL_NO_ERROR) { ;
             }
         }
-    }
 
-    bool glLogCall(const char *file, int line, const char *call) {
-        bool success = true;
-        while (GLenum error = glGetError()) {
-            std::cerr << "[OpenGL Error] " << error << '\n';
-            std::cerr << "MSG: " << glErrorToString(error) << '\n';
-            std::cerr << "File: " << file << '\n';
-            std::cerr << "Line: " << line << '\n';
-            std::cerr << "Call: " << call << '\n';
-            success = false;
+        const char *openGLErrorToString(GLenum error) {
+            switch (error) {
+                case GL_NO_ERROR:
+                    return "GL_NO_ERROR";
+                case GL_INVALID_ENUM:
+                    return "GL_INVALID_ENUM";
+                case GL_INVALID_VALUE:
+                    return "GL_INVALID_VALUE";
+                case GL_INVALID_OPERATION:
+                    return "GL_INVALID_OPERATION";
+                case GL_OUT_OF_MEMORY:
+                    return "GL_OUT_OF_MEMORY";
+            }
+            ASSERT(false, "Passed something that is not an error code");
+            return "THIS_SHOULD_NEVER_HAPPEN";
         }
-        return success;
+
+        bool wasPreviousOpenGLCallSuccessful(const char *file, int line, const char *call) {
+            bool success = true;
+            while (GLenum error = glGetError()) {
+                std::cerr << "[OpenGL error] " << error << " " << openGLErrorToString(error)
+                          << "\nFile: " << file
+                          << "\nLine: " << line
+                          << "\nCall: " << call
+                          << "\n\n";
+                success = false;
+            }
+            return success;
+        }
+
+    };
+
+    std::string readFileContents(std::string path) {
+        std::ifstream in(path);
+        std::stringstream buffer;
+        buffer << in.rdbuf();
+        return buffer.str();
     }
 }

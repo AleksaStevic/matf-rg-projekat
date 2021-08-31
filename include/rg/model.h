@@ -4,6 +4,7 @@
 
 #ifndef PROJECT_BASE_MODEL_H
 #define PROJECT_BASE_MODEL_H
+
 #include <stb_image.h>
 #include <vector>
 #include <string>
@@ -13,20 +14,22 @@
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
-#include <rg/Error.h>
+#include <rg/utils/debug.hpp>
+
 class Model {
 public:
     std::vector<Mesh> meshes;
     std::vector<Texture> loaded_textures;
 
     std::string directory;
+
     Model(std::string path) {
 
         loadModel(path);
     }
 
-    void Draw(Shader& shader) {
-        for (Mesh& mesh : meshes) {
+    void Draw(Shader &shader) {
+        for (Mesh &mesh: meshes) {
             mesh.Draw(shader);
         }
     }
@@ -34,8 +37,9 @@ public:
 private:
     void loadModel(std::string path) {
         Assimp::Importer importer;
-        const aiScene* scene = importer.ReadFile(path, aiProcess_Triangulate |
-        aiProcess_GenSmoothNormals | aiProcess_FlipUVs | aiProcess_CalcTangentSpace);
+        const aiScene *scene = importer.ReadFile(path, aiProcess_Triangulate |
+                                                       aiProcess_GenSmoothNormals | aiProcess_FlipUVs |
+                                                       aiProcess_CalcTangentSpace);
 
         if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) {
             ASSERT(false, "Failed to load a model!");
@@ -45,9 +49,9 @@ private:
         processNode(scene->mRootNode, scene);
     }
 
-    void processNode(aiNode* node, const aiScene* scene) {
+    void processNode(aiNode *node, const aiScene *scene) {
         for (unsigned int i = 0; i < node->mNumMeshes; ++i) {
-            aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
+            aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
             meshes.push_back(processMesh(mesh, scene));
         }
 
@@ -56,7 +60,7 @@ private:
         }
     }
 
-    Mesh processMesh(aiMesh* mesh, const aiScene* scene) {
+    Mesh processMesh(aiMesh *mesh, const aiScene *scene) {
         std::vector<Vertex> vertices;
         std::vector<unsigned int> indices;
         std::vector<Texture> textures;
@@ -66,7 +70,7 @@ private:
             vertex.Position.x = mesh->mVertices[i].x;
             vertex.Position.y = mesh->mVertices[i].y;
             vertex.Position.z = mesh->mVertices[i].z;
-            
+
             if (mesh->HasNormals()) {
                 vertex.Normal.x = mesh->mNormals[i].x;
                 vertex.Normal.y = mesh->mNormals[i].y;
@@ -80,7 +84,7 @@ private:
                 vertex.Tangent.x = mesh->mTangents[i].x;
                 vertex.Tangent.y = mesh->mTangents[i].y;
                 vertex.Tangent.z = mesh->mTangents[i].z;
-                
+
                 vertex.Bitangent.x = mesh->mBitangents[i].x;
                 vertex.Bitangent.y = mesh->mBitangents[i].y;
                 vertex.Bitangent.z = mesh->mBitangents[i].z;
@@ -100,24 +104,24 @@ private:
         }
 
 
-        aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
+        aiMaterial *material = scene->mMaterials[mesh->mMaterialIndex];
 
         loadTextureMaterial(material, aiTextureType_DIFFUSE, "texture_diffuse", textures);
 
         loadTextureMaterial(material, aiTextureType_SPECULAR, "texture_specular",
-                                                                textures);
+                            textures);
 
         loadTextureMaterial(material, aiTextureType_NORMALS, "texture_normal", textures);
 
         loadTextureMaterial(material, aiTextureType_HEIGHT, "texture_height",
-                                                              textures);
+                            textures);
 
 
         return Mesh(vertices, indices, textures);
     }
 
-    void loadTextureMaterial(aiMaterial* mat, aiTextureType type, std::string typeName,
-                                             std::vector<Texture> & textures) {
+    void loadTextureMaterial(aiMaterial *mat, aiTextureType type, std::string typeName,
+                             std::vector<Texture> &textures) {
 
         for (unsigned int i = 0; i < mat->GetTextureCount(type); ++i) {
             aiString str;
@@ -146,14 +150,14 @@ private:
     }
 };
 
-unsigned int TextureFromFile(const char* filename, std::string directory) {
+unsigned int TextureFromFile(const char *filename, std::string directory) {
     std::string fullPath(directory + "/" + filename);
 
     unsigned int textureID;
     glGenTextures(1, &textureID);
 
     int width, height, nrComponents;
-    unsigned char* data = stbi_load(fullPath.c_str(), &width, &height, &nrComponents, 0);
+    unsigned char *data = stbi_load(fullPath.c_str(), &width, &height, &nrComponents, 0);
     if (data) {
         GLenum format;
         if (nrComponents == 1) {

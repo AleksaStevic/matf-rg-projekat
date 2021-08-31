@@ -15,8 +15,8 @@ set(CMAKE_CXX_STANDARD 14)
 
 list(APPEND CMAKE_CXX_FLAGS "-Wall -Wextra -Wno-unused-variable -Wno-unused-parameter -O3")
 
-file(GLOB SOURCES "src/**/*.cpp" "src/**/*.c" src/main.cpp)
-file(GLOB HEADERS "include/*.h" "include/*.hpp")
+file(GLOB SOURCES "src/**/*.cpp" "src/*.cpp" "src/**/*.c" "src/*.c" src/main.cpp)
+file(GLOB HEADERS "include/**/*.h" "include/*.h" "include/**/*.hpp" "include/*.hpp")
 
 find_package(OpenGL REQUIRED)
 find_package(glfw3 REQUIRED)

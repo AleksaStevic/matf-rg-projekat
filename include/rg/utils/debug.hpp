@@ -5,15 +5,22 @@
 #ifndef MATF_RG_PROJEKAT_COMMON_HPP
 #define MATF_RG_PROJEKAT_COMMON_HPP
 
-#define ASSERT(x) do { if (!(x)) __builtin_trap(); } while(0)
-#define GLCALL(x) { rg::glClearError(); x; ASSERT(rg::glLogCall(__FILE__, __LINE__, #x)); }
+#include <iostream>
+
+#define LOG(stream) stream << "[" << __FILE__ << ", " << __func__ << ", " << __LINE__ << "] "
+#define BREAK_IF_FALSE(x) if (!(x)) __builtin_trap()
+#define ASSERT(x, msg) do { if (!(x)) { std::cerr << msg << '\n'; BREAK_IF_FALSE(false); } } while(0)
+#define GLCALL(x) \
+do{ rg::clearAllOpenGlErrors(); x; BREAK_IF_FALSE(rg::wasPreviousOpenGLCallSuccessful(__FILE__, __LINE__, #x)); } while (0)
 
 namespace rg {
-    void glClearError();
+    void clearAllOpenGlErrors();
 
-    const char *glErrorToString(GLenum error);
+    const char *openGLErrorToString(GLenum error);
 
-    bool glLogCall(const char *file, int line, const char *call);
+    bool wasPreviousOpenGLCallSuccessful(const char *file, int line, const char *call);
+
+    std::string readFileContents(std::string path);
 }
 
 #endif //MATF_RG_PROJEKAT_COMMON_HPP
