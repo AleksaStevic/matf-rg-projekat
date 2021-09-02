@@ -71,4 +71,29 @@ namespace rg {
     void Window::setHeight(int h) {
         height = h;
     }
+
+    glm::vec2 Window::getMouseOffset(float mouseX, float mouseY) {
+        if (firstMouse) {
+            lastX = mouseX;
+            lastY = mouseY;
+            firstMouse = false;
+        }
+
+        float xOffset = mouseX - lastX;
+        float yOffset = lastY - mouseY;
+        lastX = mouseX;
+        lastY = mouseY;
+
+        return glm::vec2(xOffset, yOffset);
+    }
+
+    void Window::updateDeltaTime() {
+        float currentFrame = glfwGetTime();
+        deltaTime = currentFrame - lastFrame;
+        lastFrame = currentFrame;
+    }
+
+    float Window::getDeltaTime() const {
+        return deltaTime;
+    }
 }

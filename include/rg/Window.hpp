@@ -6,11 +6,16 @@
 #define MATF_RG_PROJEKAT_WINDOW_HPP
 
 #include <string>
+#include <glm/glm.hpp>
 
 namespace rg {
     class Window {
         GLFWwindow *window;
         int width, height;
+        bool firstMouse = true;
+        float lastX, lastY; // For mouse offset
+        float lastFrame = glfwGetTime();
+        float deltaTime;
     public:
         Window(int width, int height, const std::string &name);
 
@@ -40,6 +45,12 @@ namespace rg {
         void setWidth(int w);
 
         void setHeight(int h);
+
+        glm::vec2 getMouseOffset(float mouseX, float mouseY);
+
+        void updateDeltaTime();
+
+        float getDeltaTime() const;
     };
 }
 

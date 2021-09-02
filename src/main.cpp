@@ -25,12 +25,6 @@ void update(const std::unique_ptr<rg::Window> &window);
 std::unique_ptr<rg::Window> window;
 rg::Camera camera;
 
-float deltaTime = 0;
-
-bool firstMouse = true;
-float lastX = 800 / 2.0;
-float lastY = 600 / 2.0;
-
 int main() {
     rg::glfwInit(3, 3, GLFW_OPENGL_CORE_PROFILE);
     window = std::make_unique<rg::Window>(800, 600, "Hello Window");
@@ -140,12 +134,9 @@ int main() {
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
 
-    float lastFrame = glfwGetTime();
     while (!window->shouldClose()) {
 
-        float currentFrame = glfwGetTime();
-        deltaTime = currentFrame - lastFrame;
-        lastFrame = currentFrame;
+        window->updateDeltaTime();
 
         glfwPollEvents();
         glClearColor(0.2, 0.3, 0.3, 1.0);
@@ -166,13 +157,6 @@ int main() {
 
         // camera:
         glm::mat4 view = camera.getViewMatrix();
-
-        for (unsigned i = 0; i < 4; i++) {
-            for (unsigned j = 0; j < 4; j++) {
-                std::cout << view[i][j] << " ";
-            }
-            std::cout << std::endl;
-        }
 
         shader.setMat4("view", view);
         shader.setMat4("projection", projection);
@@ -209,6 +193,8 @@ void framebufferSizeCallback(GLFWwindow *w, int width, int height) {
 
 void update(const std::unique_ptr<rg::Window> &window) {
 
+    const float deltaTime = window->getDeltaTime();
+
     if (window->keyPressed(GLFW_KEY_W)) {
         camera.move(rg::FORWARD, deltaTime);
     }
@@ -226,40 +212,17 @@ void update(const std::unique_ptr<rg::Window> &window) {
     }
 }
 
-void mouseCallback(GLFWwindow *window, double xpos, double ypos) {
-    if (firstMouse) {
-        lastX = xpos;
-        lastY = ypos;
-        firstMouse = false;
-    }
-
-    float xoffset = xpos - lastX;
-    float yoffset = lastY - ypos;
-    lastX = xpos;
-    lastY = ypos;
-
-    camera.rotate(xoffset, yoffset, true);
+void mouseCallback(GLFWwindow *w, double xPos, double yPos) {
+    glm::vec2 mouseOffset = window->getMouseOffset(xPos, yPos);
+    camera.rotate(mouseOffset.x, mouseOffset.y, true);
 }
 
-void scrollCallback(GLFWwindow *window, double xoffset, double yoffset) {
-    camera.zoom(yoffset);
+void scrollCallback(GLFWwindow *w, double xOffset, double yOffset) {
+    camera.zoom(yOffset);
 }
 
 void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods) {
-
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
         glfwSetWindowShouldClose(window, true);
     }
-
-//    if (key == GLFW_KEY_R && action == GLFW_PRESS) {
-//        glClearColor(1.0, 0.0, 0.0, 1.0);
-//    }
-//
-//    if (key == GLFW_KEY_G && action == GLFW_PRESS) {
-//        glClearColor(0.0, 1.0, 0.0, 1.0);
-//    }
-//
-//    if (key == GLFW_KEY_B && action == GLFW_PRESS) {
-//        glClearColor(0.0, 0.0, 1.0, 1.0);
-//    }
 }
