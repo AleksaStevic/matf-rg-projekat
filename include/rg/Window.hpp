@@ -10,7 +10,7 @@
 namespace rg {
     class Window {
         GLFWwindow *window;
-        static bool glfwInitialized;
+        int width, height;
     public:
         Window(int width, int height, const std::string &name);
 
@@ -22,12 +22,24 @@ namespace rg {
 
         void setKeyCallback(GLFWkeyfun cb);
 
+        void setCursorPositionCallback(GLFWcursorposfun cb);
+
+        void setScrollCallback(GLFWscrollfun cb);
+
+        bool keyPressed(int key) const;
+
         bool shouldClose() const;
 //        void setShouldClose(bool shouldClose);
 
         void swapBuffers() const;
 
-        static void glfwInit(int majorVer, int minorVer, int profile);
+        int getWidth() const;
+
+        int getHeight() const;
+
+        void setWidth(int w);
+
+        void setHeight(int h);
     };
 }
 

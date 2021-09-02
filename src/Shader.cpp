@@ -8,7 +8,11 @@
 #include <rg/utils/debug.hpp>
 
 namespace rg {
+
+    extern bool gladLoaded;
+
     Shader::Shader(std::string vertexShaderPath, std::string fragmentShaderPath) {
+        ASSERT(gladLoaded, "Glad is not loaded.");
 //        appendShaderFolderIfNotPresent(vertexShaderPath);
 //        appendShaderFolderIfNotPresent(fragmentShaderPath);
         std::string vsString = readFileContents(std::move(vertexShaderPath));

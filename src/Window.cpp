@@ -7,7 +7,10 @@
 #include <rg/utils/debug.hpp>
 
 namespace rg {
-    Window::Window(int width, int height, const std::string &name) : window(nullptr) {
+
+    extern bool glfwInitialized;
+
+    Window::Window(int width, int height, const std::string &name) : window(nullptr), width(width), height(height) {
         ASSERT(glfwInitialized, "GLFW is not initialized.");
         window = glfwCreateWindow(width, height, name.c_str(), nullptr, nullptr);
         if (window == nullptr) {
@@ -33,6 +36,18 @@ namespace rg {
         glfwSetKeyCallback(window, cb);
     }
 
+    void Window::setCursorPositionCallback(GLFWcursorposfun cb) {
+        glfwSetCursorPosCallback(window, cb);
+    }
+
+    void Window::setScrollCallback(GLFWscrollfun cb) {
+        glfwSetScrollCallback(window, cb);
+    }
+
+    bool Window::keyPressed(int key) const {
+        return glfwGetKey(window, key) == GLFW_PRESS;
+    }
+
     bool Window::shouldClose() const {
         return glfwWindowShouldClose(window);
     }
@@ -41,15 +56,19 @@ namespace rg {
         glfwSwapBuffers(window);
     }
 
-    void Window::glfwInit(int majorVer, int minorVer, int profile) {
-        ::glfwInit();
-        // OpenGL 3.3 Core
-        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, majorVer);
-        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, minorVer);
-        glfwWindowHint(GLFW_OPENGL_PROFILE, profile);
-
-        glfwInitialized = true;
+    int Window::getWidth() const {
+        return width;
     }
 
-    bool Window::glfwInitialized = false;
+    int Window::getHeight() const {
+        return height;
+    }
+
+    void Window::setWidth(int w) {
+        width = w;
+    }
+
+    void Window::setHeight(int h) {
+        height = h;
+    }
 }
