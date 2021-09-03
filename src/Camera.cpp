@@ -22,6 +22,10 @@ namespace rg {
         return glm::lookAt(position, position + front, up);
     }
 
+    glm::mat4 Camera::getPerspectiveMatrix(float aspect) const {
+        return glm::perspective(glm::radians(fov), aspect, zNear, zFar);
+    }
+
     void Camera::move(Direction direction, float deltaTime) {
         float velocity = movementSpeed * deltaTime;
         switch (direction) {

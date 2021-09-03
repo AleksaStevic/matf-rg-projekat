@@ -16,7 +16,7 @@ namespace rg {
         unsigned int tId;
         GLenum unit;
     public:
-        Texture2D(const std::string &imgPath, GLint filtering, GLint sampling, GLint format, GLenum unit);
+        Texture2D(const std::string &imgPath, GLint filtering, GLint sampling, GLenum unit);
 
         void activate() const;
 

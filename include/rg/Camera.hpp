@@ -21,6 +21,8 @@ namespace rg {
         float yaw = -90.0f;
         float pitch = 0.0f;
         float mouseSensitivity = 0.2f;
+        float zNear = 0.1f;
+        float zFar = 100.0f;
 
         glm::vec3 position = glm::vec3(0.0f, 0.0f, 10.0f);
         glm::vec3 worldUp = glm::vec3(0.0f, 1.0f, 0.0f);
@@ -31,6 +33,8 @@ namespace rg {
         Camera();
 
         glm::mat4 getViewMatrix() const;
+
+        glm::mat4 getPerspectiveMatrix(float aspect) const;
 
         void move(Direction direction, float deltaTime);
 

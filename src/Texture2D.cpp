@@ -11,7 +11,7 @@ namespace rg {
 
     extern bool gladLoaded;
 
-    Texture2D::Texture2D(const std::string &imgPath, GLint filtering, GLint sampling, GLint format, GLenum unit) : tId(
+    Texture2D::Texture2D(const std::string &imgPath, GLint filtering, GLint sampling, GLenum unit) : tId(
             0), unit(unit) {
         ASSERT(gladLoaded, "Glad is not loaded.");
         glGenTextures(1, &tId);
@@ -25,6 +25,10 @@ namespace rg {
         int width, height, nChannel;
         stbi_set_flip_vertically_on_load(true);
         unsigned char *data = stbi_load(imgPath.c_str(), &width, &height, &nChannel, 0);
+
+        GLint format = GL_RED;
+        if (nChannel == 3) format = GL_RGB;
+        if (nChannel == 4) format = GL_RGBA;
 
         if (data) {
             glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
