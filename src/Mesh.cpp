@@ -1,43 +1,14 @@
-//
-// Created by matf-rg on 4.12.20..
-//
-
-#ifndef PROJECT_BASE_MESH_H
-#define PROJECT_BASE_MESH_H
-
-#include <glad/glad.h>
-#include <glm/glm.hpp>
-#include <vector>
+#include <rg/Mesh.hpp>
 #include <rg/utils/debug.hpp>
 
-struct Vertex {
-    glm::vec3 Position;
-    glm::vec3 Normal;
-    glm::vec2 TexCoords;
-
-    glm::vec3 Tangent;
-    glm::vec3 Bitangent;
-};
-
-struct Texture {
-    unsigned int id;
-    std::string type; // texture_diffuse, texture_specular, texture_normal, texture_height
-    std::string path;
-};
-
-class Mesh {
-public:
-    std::vector<Vertex> vertices;
-    std::vector<unsigned int> indices;
-    std::vector<Texture> textures;
-
-    Mesh(const std::vector<Vertex> &vs, const std::vector<unsigned int> &ind,
-         const std::vector<Texture> &tex)
+namespace rg {
+    Mesh::Mesh(const std::vector<Vertex> &vs, const std::vector<unsigned int> &ind,
+               const std::vector<Texture> &tex)
             : vertices(vs), indices(ind), textures(tex) {
         setupMesh();
     }
 
-    void Draw(Shader &shader) {
+    void Mesh::Draw(Shader &shader) {
         unsigned int diffuseNr = 1;
         unsigned int specularNr = 1;
         unsigned int normalNr = 1;
@@ -65,21 +36,18 @@ public:
         }
 
         glBindVertexArray(VAO);
-        glDrawElements(GL_TEXTURE_2D, indices.size(), GL_UNSIGNED_INT, 0);
+        glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
 
         glBindVertexArray(0);
         glActiveTexture(GL_TEXTURE0);
     }
 
-private:
-    unsigned int VAO;
-
-    void setupMesh() {
+    void Mesh::setupMesh() {
 
         unsigned int VBO;
         unsigned int EBO;
 
-        glGenVertexArray(1, &VAO);
+        glGenVertexArrays(1, &VAO);
         glGenBuffers(1, &VBO);
         glGenBuffers(1, &EBO);
 
@@ -109,5 +77,3 @@ private:
         glBindVertexArray(0);
     }
 };
-
-#endif //PROJECT_BASE_MESH_H

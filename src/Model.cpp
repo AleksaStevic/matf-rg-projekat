@@ -1,41 +1,20 @@
-//
-// Created by matf-rg on 4.12.20..
-//
-
-#ifndef PROJECT_BASE_MODEL_H
-#define PROJECT_BASE_MODEL_H
-
-#include <stb_image.h>
-#include <vector>
-#include <string>
-#include <learnopengl/shader.h>
-#include <rg/mesh.h>
-
-#include <assimp/Importer.hpp>
-#include <assimp/scene.h>
-#include <assimp/postprocess.h>
+#include <rg/Model.hpp>
 #include <rg/utils/debug.hpp>
+#include <stb_image.h>
 
-class Model {
-public:
-    std::vector<Mesh> meshes;
-    std::vector<Texture> loaded_textures;
+namespace rg {
 
-    std::string directory;
-
-    Model(std::string path) {
-
+    Model::Model(std::string path) {
         loadModel(path);
     }
 
-    void Draw(Shader &shader) {
+    void Model::Draw(Shader &shader) {
         for (Mesh &mesh: meshes) {
             mesh.Draw(shader);
         }
     }
 
-private:
-    void loadModel(std::string path) {
+    void Model::loadModel(std::string path) {
         Assimp::Importer importer;
         const aiScene *scene = importer.ReadFile(path, aiProcess_Triangulate |
                                                        aiProcess_GenSmoothNormals | aiProcess_FlipUVs |
@@ -49,7 +28,7 @@ private:
         processNode(scene->mRootNode, scene);
     }
 
-    void processNode(aiNode *node, const aiScene *scene) {
+    void Model::processNode(aiNode *node, const aiScene *scene) {
         for (unsigned int i = 0; i < node->mNumMeshes; ++i) {
             aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
             meshes.push_back(processMesh(mesh, scene));
@@ -60,7 +39,7 @@ private:
         }
     }
 
-    Mesh processMesh(aiMesh *mesh, const aiScene *scene) {
+    Mesh Model::processMesh(aiMesh *mesh, const aiScene *scene) {
         std::vector<Vertex> vertices;
         std::vector<unsigned int> indices;
         std::vector<Texture> textures;
@@ -95,7 +74,7 @@ private:
             vertices.push_back(vertex);
         }
 
-        for (unsigned int i = 0; i < mesh->mFaces; ++i) {
+        for (unsigned int i = 0; i < mesh->mNumFaces; ++i) {
             aiFace face = mesh->mFaces[i];
 
             for (unsigned int j = 0; j < face.mNumIndices; ++j) {
@@ -108,20 +87,18 @@ private:
 
         loadTextureMaterial(material, aiTextureType_DIFFUSE, "texture_diffuse", textures);
 
-        loadTextureMaterial(material, aiTextureType_SPECULAR, "texture_specular",
-                            textures);
+        loadTextureMaterial(material, aiTextureType_SPECULAR, "texture_specular", textures);
 
         loadTextureMaterial(material, aiTextureType_NORMALS, "texture_normal", textures);
 
-        loadTextureMaterial(material, aiTextureType_HEIGHT, "texture_height",
-                            textures);
+        loadTextureMaterial(material, aiTextureType_HEIGHT, "texture_height", textures);
 
 
         return Mesh(vertices, indices, textures);
     }
 
-    void loadTextureMaterial(aiMaterial *mat, aiTextureType type, std::string typeName,
-                             std::vector<Texture> &textures) {
+    void Model::loadTextureMaterial(aiMaterial *mat, aiTextureType type, std::string typeName,
+                                    std::vector<Texture> &textures) {
 
         for (unsigned int i = 0; i < mat->GetTextureCount(type); ++i) {
             aiString str;
@@ -130,7 +107,7 @@ private:
             bool skip = false;
 
             for (unsigned int j = 0; j < loaded_textures.size(); ++j) {
-                if (std::strcmp(str.C_Str(), loaded_textures[i].path.c_str()) == 0) {
+                if (std::strcmp(str.C_Str(), loaded_textures[j].path.c_str()) == 0) {
                     textures.push_back(loaded_textures[j]);
                     skip = true;
                     break;
@@ -148,39 +125,37 @@ private:
         }
 
     }
-};
 
-unsigned int TextureFromFile(const char *filename, std::string directory) {
-    std::string fullPath(directory + "/" + filename);
+    unsigned int TextureFromFile(const char *filename, std::string directory) {
+        std::string fullPath(directory + "/" + filename);
 
-    unsigned int textureID;
-    glGenTextures(1, &textureID);
+        unsigned int textureID;
+        glGenTextures(1, &textureID);
 
-    int width, height, nrComponents;
-    unsigned char *data = stbi_load(fullPath.c_str(), &width, &height, &nrComponents, 0);
-    if (data) {
-        GLenum format;
-        if (nrComponents == 1) {
-            format = GL_RED;
-        } else if (nrComponents == 3) {
-            format = GL_RGB;
-        } else if (nrComponents == 4) {
-            format = GL_RGBA;
+        int width, height, nrComponents;
+        unsigned char *data = stbi_load(fullPath.c_str(), &width, &height, &nrComponents, 0);
+        if (data) {
+            GLenum format;
+            if (nrComponents == 1) {
+                format = GL_RED;
+            } else if (nrComponents == 3) {
+                format = GL_RGB;
+            } else if (nrComponents == 4) {
+                format = GL_RGBA;
+            }
+            glBindTexture(GL_TEXTURE_2D, textureID);
+            glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
+            glGenerateMipmap(GL_TEXTURE_2D);
+
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+        } else {
+            ASSERT(false, "Failed to load texture image");
         }
-        glBindTexture(GL_TEXTURE_2D, textureID);
-        glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
-        glGenerateMipmap(GL_TEXTURE_2D);
-
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_FILTER, GL_LINEAR);
-
-    } else {
-        ASSERT(false, "Failed to load texture image");
+        stbi_image_free(data);
+        return textureID;
     }
-    stbi_image_free(data);
-    return textureID;
-}
-
-#endif //PROJECT_BASE_MODEL_H
+};
