@@ -1,5 +1,9 @@
 #include <memory>
 
+#include <imgui.h>
+#include <imgui_impl_glfw.h>
+#include <imgui_impl_opengl3.h>
+
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
@@ -8,11 +12,8 @@
 #include <stb_image.h>
 
 #include <rg/Shader.hpp>
-//#include <rg/Texture2D.hpp>
 #include <rg/Model.hpp>
-//#include <learnopengl/model.h>
-//#include <learnopengl/shader.h>
-#include  <rg/Window.hpp>
+#include <rg/Window.hpp>
 #include <rg/Camera.hpp>
 #include <rg/utils/utils.hpp>
 #include <rg/light.hpp>
@@ -44,6 +45,15 @@ int main() {
     rg::loadGlad();
     stbi_set_flip_vertically_on_load(true);
 
+    // ImGui init
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO &io = ImGui::GetIO();
+    (void) io;
+
+    ImGui::StyleColorsDark();
+    ImGui_ImplGlfw_InitForOpenGL(window->ptr(), true);
+    ImGui_ImplOpenGL3_Init("#version 330 core");
 
     glEnable(GL_DEPTH_TEST);
 
@@ -63,8 +73,14 @@ int main() {
 
     while (!window->shouldClose()) {
 
+        glfwPollEvents();
+
         window->updateDeltaTime();
         update(window);
+
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
+        ImGui::NewFrame();
 
         glClearColor(0.2, 0.2, 0.2, 1.0);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -94,9 +110,24 @@ int main() {
         shader.setMat4("model", m);
         model.draw(shader);
 
+        {
+            ImGui::Begin("Text Window");
+            ImGui::Text("Hello World!");
+            ImGui::End();
+        }
+
+        // ImGui render
+        ImGui::Render();
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
         window->swapBuffers();
         glfwPollEvents();
     }
+
+    // ImGui CleanUp
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext();
 
     glfwTerminate();
     return 0;
