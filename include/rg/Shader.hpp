@@ -9,6 +9,8 @@
 #include <glm/glm.hpp>
 #include <glad/glad.h>
 
+#include <rg/light.hpp>
+
 namespace rg {
     class Shader {
         unsigned int pId;
@@ -42,6 +44,12 @@ namespace rg {
         void setMat3(const std::string &name, const glm::mat3 &mat) const;
 
         void setMat4(const std::string &name, const glm::mat4 &mat) const;
+
+        void setLight(const std::string &name, const PointLight &light) const;
+
+        void setLight(const std::string &name, const DirLight &light) const;
+
+        void setLight(const std::string &name, const SpotLight &light) const;
 
         void deleteProgram();
 

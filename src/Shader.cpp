@@ -98,6 +98,36 @@ namespace rg {
         glUniformMatrix4fv(glGetUniformLocation(pId, name.c_str()), 1, GL_FALSE, &mat[0][0]);
     }
 
+    void Shader::setLight(const std::string &name, const DirLight &light) const {
+        setVec3(name + ".ambient", light.ambient);
+        setVec3(name + ".specular", light.specular);
+        setVec3(name + ".diffuse", light.diffuse);
+        setVec3(name + ".direction", light.direction);
+    }
+
+    void Shader::setLight(const std::string &name, const SpotLight &light) const {
+        setVec3(name + ".position", light.position);
+        setVec3(name + ".ambient", light.ambient);
+        setVec3(name + ".specular", light.specular);
+        setVec3(name + ".diffuse", light.diffuse);
+        setVec3(name + ".direction", light.direction);
+        setFloat(name + ".constant", light.constant);
+        setFloat(name + ".linear", light.linear);
+        setFloat(name + ".quadratic", light.quadratic);
+        setFloat(name + ".cutOff", light.cutOff);
+        setFloat(name + ".outerCutOff", light.outerCutOff);
+    }
+
+    void Shader::setLight(const std::string &name, const PointLight &light) const {
+        setVec3(name + ".position", light.position);
+        setVec3(name + ".ambient", light.ambient);
+        setVec3(name + ".specular", light.specular);
+        setVec3(name + ".diffuse", light.diffuse);
+        setFloat(name + ".constant", light.constant);
+        setFloat(name + ".linear", light.linear);
+        setFloat(name + ".quadratic", light.quadratic);
+    }
+
     void Shader::deleteProgram() {
         glDeleteProgram(pId);
         pId = 0;

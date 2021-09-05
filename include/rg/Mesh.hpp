@@ -34,11 +34,12 @@ namespace rg {
         std::vector<Vertex> vertices;
         std::vector<unsigned int> indices;
         std::vector<Texture> textures;
+        std::string glslIdentifierPrefix;
 
-        Mesh(const std::vector<Vertex> &vs, const std::vector<unsigned int> &ind,
-             const std::vector<Texture> &tex);
+        Mesh(std::vector<Vertex> vs, std::vector<unsigned int> ind,
+             std::vector<Texture> tex);
 
-        void Draw(Shader &shader);
+        void draw(Shader &shader);
 
     private:
         void setupMesh();

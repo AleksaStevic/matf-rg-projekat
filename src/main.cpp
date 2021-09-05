@@ -12,9 +12,10 @@
 #include <rg/Model.hpp>
 //#include <learnopengl/model.h>
 //#include <learnopengl/shader.h>
-#include <rg/Window.hpp>
+#include  <rg/Window.hpp>
 #include <rg/Camera.hpp>
 #include <rg/utils/utils.hpp>
+#include <rg/light.hpp>
 
 void framebufferSizeCallback(GLFWwindow *window, int width, int height);
 
@@ -48,6 +49,17 @@ int main() {
 
     rg::Shader shader("resources/shaders/vertexShader.vs", "resources/shaders/fragmentShader.fs");
     rg::Model model("resources/objects/backpack/backpack.obj");
+    model.setTextureNamePrefix("material.");
+
+    rg::PointLight pointLight{
+            glm::vec3(4.0f, 4.0f, 0.0f),
+            glm::vec3(0.4, 0.4, 0.2),
+            glm::vec3(0.6, 0.5, 0.6),
+            glm::vec3(1.0f),
+            1.0f,
+            0.09f,
+            0.032f
+    };
 
     while (!window->shouldClose()) {
 
@@ -58,6 +70,17 @@ int main() {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         shader.use();
+        pointLight.position = glm::vec3(4.0f * cos(glfwGetTime()), 4.0f, 4.0f * sin(glfwGetTime()));
+//        shader.setVec3("pointLight.position", pointLight.position);
+//        shader.setVec3("pointLight.ambient", pointLight.ambient);
+//        shader.setVec3("pointLight.specular", pointLight.specular);
+//        shader.setVec3("pointLight.diffuse", pointLight.diffuse);
+//        shader.setFloat("pointLight.constant", pointLight.constant);
+//        shader.setFloat("pointLight.linear", pointLight.linear);
+//        shader.setFloat("pointLight.quadratic", pointLight.quadratic);
+        shader.setLight("pointLight", pointLight);
+        shader.setFloat("material.shininess", 32.0f);
+        shader.setVec3("viewPosition", camera.position);
 
         float windowAspectRatio = (float) window->getWidth() / (float) window->getHeight();
         glm::mat4 projection = camera.getPerspectiveMatrix(windowAspectRatio);
@@ -69,7 +92,7 @@ int main() {
         m = glm::translate(m, glm::vec3(0.0f, 0.0f, 0.0f)); // translate it down so it's at the center of the scene
         m = glm::scale(m, glm::vec3(1.0f, 1.0f, 1.0f));    // it's a bit too big for our scene, so scale it down
         shader.setMat4("model", m);
-        model.Draw(shader);
+        model.draw(shader);
 
         window->swapBuffers();
         glfwPollEvents();

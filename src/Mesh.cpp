@@ -1,14 +1,14 @@
 #include <rg/Mesh.hpp>
 #include <rg/utils/debug.hpp>
+#include <utility>
 
 namespace rg {
-    Mesh::Mesh(const std::vector<Vertex> &vs, const std::vector<unsigned int> &ind,
-               const std::vector<Texture> &tex)
-            : vertices(vs), indices(ind), textures(tex) {
+    Mesh::Mesh(std::vector<Vertex> vs, std::vector<unsigned int> ind, std::vector<Texture> tex)
+            : vertices(std::move(vs)), indices(std::move(ind)), textures(std::move(tex)) {
         setupMesh();
     }
 
-    void Mesh::Draw(Shader &shader) {
+    void Mesh::draw(Shader &shader) {
         unsigned int diffuseNr = 1;
         unsigned int specularNr = 1;
         unsigned int normalNr = 1;
@@ -16,20 +16,22 @@ namespace rg {
 
         for (unsigned int i = 0; i < textures.size(); ++i) {
             glActiveTexture(GL_TEXTURE0 + i);
-            std::string name = textures[i].type;
+            std::string name = glslIdentifierPrefix;
             std::string number;
+            name.append(textures[i].type);
 
-            if (name == "texture_diffuse") {
+            if (textures[i].type == "texture_diffuse") {
                 number = std::to_string(diffuseNr++); // 1
-            } else if (name == "texture_specular") {
+            } else if (textures[i].type == "texture_specular") {
                 number = std::to_string(specularNr++);
-            } else if (name == "texture_normal") {
+            } else if (textures[i].type == "texture_normal") {
                 number = std::to_string(normalNr++);
-            } else if (name == "texture_height") {
+            } else if (textures[i].type == "texture_height") {
                 number = std::to_string(heightNr++);
             } else {
                 ASSERT(false, "Unknown texture type");
             }
+
             name.append(number);
             shader.setInt(name, i); // texture_diffuse1
             glBindTexture(GL_TEXTURE_2D, textures[i].id);
@@ -76,4 +78,4 @@ namespace rg {
 
         glBindVertexArray(0);
     }
-};
+}

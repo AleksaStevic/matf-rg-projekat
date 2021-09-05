@@ -7,6 +7,7 @@
 
 #include <string>
 #include <vector>
+#include <unordered_map>
 
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
@@ -19,26 +20,28 @@ namespace rg {
     class Model {
     public:
         std::vector<Mesh> meshes;
-        std::vector<Texture> loaded_textures;
+        std::unordered_map<const char *, Texture> loaded_textures;
 
         std::string directory;
 
-        Model(std::string path);
+        explicit Model(const std::string &path);
 
-        void Draw(Shader &shader);
+        void draw(Shader &shader);
+
+        void setTextureNamePrefix(const std::string &prefix);
 
     private:
-        void loadModel(std::string path);
+        void loadModel(const std::string &path);
 
         void processNode(aiNode *node, const aiScene *scene);
 
         Mesh processMesh(aiMesh *mesh, const aiScene *scene);
 
-        void loadTextureMaterial(aiMaterial *mat, aiTextureType type, std::string typeName,
+        void loadTextureMaterial(aiMaterial *mat, aiTextureType type, const std::string &typeName,
                                  std::vector<Texture> &textures);
     };
 
-    unsigned int TextureFromFile(const char *filename, std::string directory);
+    unsigned int textureFromFile(const char *filename, const std::string &directory);
 }
 
 #endif //MATF_RG_PROJEKAT_MODEL_HPP
