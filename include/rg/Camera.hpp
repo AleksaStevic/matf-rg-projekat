@@ -32,6 +32,8 @@ namespace rg {
 
         Camera();
 
+        explicit Camera(glm::vec3 position);
+
         glm::mat4 getViewMatrix() const;
 
         glm::mat4 getPerspectiveMatrix(float aspect) const;

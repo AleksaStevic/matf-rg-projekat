@@ -18,6 +18,10 @@ namespace rg {
         updateCameraVectors();
     }
 
+    Camera::Camera(glm::vec3 position) : position(position) {
+        updateCameraVectors();
+    }
+
     glm::mat4 Camera::getViewMatrix() const {
         return glm::lookAt(position, position + front, up);
     }

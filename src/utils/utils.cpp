@@ -2,11 +2,11 @@
 
 #include <iostream>
 #include <cstdlib>
-#include <fstream>
-#include <sstream>
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+
+#include <glm/glm.hpp>
 
 namespace rg {
 
@@ -43,4 +43,14 @@ namespace rg {
     T clamp(const T &v, const T &lo, const T &hi) {
         return v < lo ? lo : v > hi ? hi : v;
     }
+}
+
+std::ostream &operator<<(std::ostream &os, const glm::vec3 &v) {
+    os << v.x << ' ' << v.y << ' ' << v.z;
+    return os;
+}
+
+std::istream &operator>>(std::istream &is, glm::vec3 &v) {
+    is >> v.x >> v.y >> v.z;
+    return is;
 }
