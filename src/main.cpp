@@ -13,7 +13,6 @@
 
 #include <rg/Shader.hpp>
 #include <rg/Model.hpp>
-#include <rg/Window.hpp>
 #include <rg/Camera.hpp>
 #include <rg/utils/utils.hpp>
 #include <rg/light.hpp>
@@ -55,27 +54,25 @@ void scrollCallback(GLFWwindow *window, double xoffset, double yoffset);
 
 void drawImGui(ProgramState *programState);
 
-void update(const std::unique_ptr<rg::Window> &window);
+void update(GLFWwindow *window);
 
-std::unique_ptr<rg::Window> window;
 ProgramState *programState;
 
 int main() {
 
 
     rg::glfwInit(3, 3, GLFW_OPENGL_CORE_PROFILE);
-    window = std::make_unique<rg::Window>(1280, 720, "Hello Window");
-    window->setAsCurrentContext();
-    window->setFramebufferSizeCallback(framebufferSizeCallback);
-    window->setKeyCallback(keyCallback);
-    window->setCursorPositionCallback(mouseCallback);
-    window->setScrollCallback(scrollCallback);
+    GLFWwindow *window = rg::createWindow(1280, 720, "Hello Window");
+    glfwMakeContextCurrent(window);
+    glfwSetFramebufferSizeCallback(window, framebufferSizeCallback);
+    glfwSetKeyCallback(window, keyCallback);
+    glfwSetCursorPosCallback(window, mouseCallback);
+    glfwSetScrollCallback(window, scrollCallback);
 
     programState = new ProgramState();
     programState->loadFromDisk("resources/programState.txt");
 
-    glfwSetInputMode(window->ptr(), GLFW_CURSOR,
-                     programState->imGuiEnabled ? GLFW_CURSOR_NORMAL : GLFW_CURSOR_DISABLED);
+    glfwSetInputMode(window, GLFW_CURSOR, programState->imGuiEnabled ? GLFW_CURSOR_NORMAL : GLFW_CURSOR_DISABLED);
 
     rg::loadGlad();
     stbi_set_flip_vertically_on_load(true);
@@ -87,7 +84,7 @@ int main() {
     (void) io;
 
     ImGui::StyleColorsDark();
-    ImGui_ImplGlfw_InitForOpenGL(window->ptr(), true);
+    ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init("#version 330 core");
 
     glEnable(GL_DEPTH_TEST);
@@ -108,11 +105,11 @@ int main() {
             0.032f
     };
 
-    while (!window->shouldClose()) {
+    while (!glfwWindowShouldClose(window)) {
 
         glfwPollEvents();
 
-        window->updateDeltaTime();
+        rg::updateDeltaTime();
         update(window);
 
 
@@ -132,7 +129,10 @@ int main() {
         shader.setFloat("material.shininess", 32.0f);
         shader.setVec3("viewPosition", programState->camera.position);
 
-        float windowAspectRatio = (float) window->getWidth() / (float) window->getHeight();
+        int windowWidth, windowHeight;
+        glfwGetWindowSize(window, &windowWidth, &windowHeight);
+
+        float windowAspectRatio = (float) windowWidth / (float) windowHeight;
         glm::mat4 projection = programState->camera.getPerspectiveMatrix(windowAspectRatio);
         glm::mat4 view = programState->camera.getViewMatrix();
         shader.setMat4("projection", projection);
@@ -149,7 +149,7 @@ int main() {
             drawImGui(programState);
 
 
-        window->swapBuffers();
+        glfwSwapBuffers(window);
         glfwPollEvents();
     }
 
@@ -166,33 +166,31 @@ int main() {
 
 void framebufferSizeCallback(GLFWwindow *w, int width, int height) {
     glViewport(0, 0, width, height);
-    window->setWidth(width);
-    window->setHeight(height);
 }
 
-void update(const std::unique_ptr<rg::Window> &window) {
+void update(GLFWwindow *window) {
 
-    const float deltaTime = window->getDeltaTime();
+    const float deltaTime = rg::getDeltaTime();
 
-    if (window->keyPressed(GLFW_KEY_W)) {
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
         programState->camera.move(rg::FORWARD, deltaTime);
     }
 
-    if (window->keyPressed(GLFW_KEY_S)) {
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
         programState->camera.move(rg::BACKWARD, deltaTime);
     }
 
-    if (window->keyPressed(GLFW_KEY_D)) {
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
         programState->camera.move(rg::RIGHT, deltaTime);
     }
 
-    if (window->keyPressed(GLFW_KEY_A)) {
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
         programState->camera.move(rg::LEFT, deltaTime);
     }
 }
 
 void mouseCallback(GLFWwindow *w, double xPos, double yPos) {
-    glm::vec2 mouseOffset = window->getMouseOffset(xPos, yPos);
+    glm::vec2 mouseOffset = rg::getMouseOffset(xPos, yPos);
     if (!programState->imGuiEnabled)
         programState->camera.rotate(mouseOffset.x, mouseOffset.y, true);
 }

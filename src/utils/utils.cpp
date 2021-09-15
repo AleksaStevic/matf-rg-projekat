@@ -1,17 +1,14 @@
 #include <rg/utils/utils.hpp>
 
-#include <iostream>
-#include <cstdlib>
-
-#include <glad/glad.h>
-#include <GLFW/glfw3.h>
-
-#include <glm/glm.hpp>
-
 namespace rg {
 
     bool glfwInitialized = false;
     bool gladLoaded = false;
+    bool firstMouse = true;
+    float lastX{};
+    float lastY{};
+    float deltaTime{};
+    float lastFrame{};
 
     std::string readFileContents(std::string path) {
         std::ifstream in(path);
@@ -29,6 +26,31 @@ namespace rg {
         gladLoaded = true;
     }
 
+    void updateDeltaTime() {
+        float currentFrame = glfwGetTime();
+        deltaTime = currentFrame - lastFrame;
+        lastFrame = currentFrame;
+    }
+
+    float getDeltaTime() {
+        return deltaTime;
+    }
+
+    glm::vec2 getMouseOffset(float mouseX, float mouseY) {
+        if (firstMouse) {
+            lastX = mouseX;
+            lastY = mouseY;
+            firstMouse = false;
+        }
+
+        float xOffset = mouseX - lastX;
+        float yOffset = lastY - mouseY;
+        lastX = mouseX;
+        lastY = mouseY;
+
+        return {xOffset, yOffset};
+    }
+
     void glfwInit(int majorVer, int minorVer, int profile) {
         ::glfwInit();
         // OpenGL 3.3 Core
@@ -39,9 +61,12 @@ namespace rg {
         glfwInitialized = true;
     }
 
-    template<class T>
-    T clamp(const T &v, const T &lo, const T &hi) {
-        return v < lo ? lo : v > hi ? hi : v;
+    GLFWwindow *createWindow(int width, int height, const std::string &name) {
+        ASSERT(glfwInitialized, "GLFW is not initialized.");
+        GLFWwindow *window = glfwCreateWindow(width, height, name.c_str(), nullptr, nullptr);
+        ASSERT(window != nullptr, "Failed to create window.");
+
+        return window;
     }
 }
 

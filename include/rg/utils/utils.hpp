@@ -10,8 +10,13 @@
 #include <ostream>
 #include <fstream>
 #include <sstream>
+#include <cstdlib>
 
+#include <glad/glad.h>
+#include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
+
+#include <rg/utils/debug.hpp>
 
 namespace rg {
 
@@ -21,8 +26,22 @@ namespace rg {
 
     void glfwInit(int majorVer, int minorVer, int profile);
 
+    GLFWwindow *createWindow(int width, int height, const std::string &name);
+
+    void updateDeltaTime();
+
+    float getDeltaTime();
+
+    glm::vec2 getMouseOffset(float mouseX, float mouseY);
+
+    float getWindowWidth();
+
+    float getWindowHeight();
+
     template<class T>
-    T clamp(const T &v, const T &lo, const T &hi);
+    T clamp(const T &v, const T &lo, const T &hi) {
+        return v < lo ? lo : v > hi ? hi : v;
+    }
 }
 
 std::ostream &operator<<(std::ostream &os, const glm::vec3 &v);

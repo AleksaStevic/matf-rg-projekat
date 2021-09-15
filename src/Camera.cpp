@@ -59,12 +59,7 @@ namespace rg {
         yaw += xoffset;
         pitch += yoffset;
         if (constrainPitch) {
-            if (pitch > 89.0f) {
-                pitch = 89.0f;
-            }
-            if (pitch < -89.0f) {
-                pitch = -89.0f;
-            }
+            pitch = rg::clamp(pitch, -89.0f, 89.0f);
         }
 
         updateCameraVectors();
@@ -72,11 +67,6 @@ namespace rg {
 
     void Camera::zoom(float yoffset) {
         fov -= yoffset;
-        if (fov < 1.0f) {
-            fov = 1.0f;
-        }
-        if (fov > 45.0f) {
-            fov = 45.0f;
-        }
+        fov = rg::clamp(fov, 1.0f, 45.0f);
     }
 }

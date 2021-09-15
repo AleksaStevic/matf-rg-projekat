@@ -4,6 +4,8 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
+#include <rg/utils/utils.hpp>
+
 namespace rg {
     enum Direction {
         FORWARD,
