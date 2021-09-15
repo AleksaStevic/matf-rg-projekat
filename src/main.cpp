@@ -61,6 +61,8 @@ std::unique_ptr<rg::Window> window;
 ProgramState *programState;
 
 int main() {
+
+
     rg::glfwInit(3, 3, GLFW_OPENGL_CORE_PROFILE);
     window = std::make_unique<rg::Window>(1280, 720, "Hello Window");
     window->setAsCurrentContext();
@@ -89,6 +91,8 @@ int main() {
     ImGui_ImplOpenGL3_Init("#version 330 core");
 
     glEnable(GL_DEPTH_TEST);
+//    glEnable(GL_BLEND);
+//    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     rg::Shader shader("resources/shaders/vertexShader.vs", "resources/shaders/fragmentShader.fs");
     rg::Model model("resources/objects/backpack/backpack.obj");

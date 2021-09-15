@@ -84,7 +84,7 @@ namespace rg {
         lastX = mouseX;
         lastY = mouseY;
 
-        return glm::vec2(xOffset, yOffset);
+        return {xOffset, yOffset};
     }
 
     void Window::updateDeltaTime() {
