@@ -61,9 +61,9 @@ namespace rg {
         glfwInitialized = true;
     }
 
-    GLFWwindow *createWindow(int width, int height, const std::string &name) {
+    GLFWwindow *createWindow(int width, int height, const char *name) {
         ASSERT(glfwInitialized, "GLFW is not initialized.");
-        GLFWwindow *window = glfwCreateWindow(width, height, name.c_str(), nullptr, nullptr);
+        GLFWwindow *window = glfwCreateWindow(width, height, name, nullptr, nullptr);
         ASSERT(window != nullptr, "Failed to create window.");
 
         return window;

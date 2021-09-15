@@ -26,7 +26,7 @@ namespace rg {
 
     void glfwInit(int majorVer, int minorVer, int profile);
 
-    GLFWwindow *createWindow(int width, int height, const std::string &name);
+    GLFWwindow *createWindow(int width, int height, const char *name);
 
     void updateDeltaTime();
 
@@ -38,9 +38,12 @@ namespace rg {
 
     float getWindowHeight();
 
-    template<class T>
-    T clamp(const T &v, const T &lo, const T &hi) {
+    float clamp(float v, float lo, float hi) {
         return v < lo ? lo : v > hi ? hi : v;
+    }
+
+    float map(float s, float a1, float a2, float b1, float b2) {
+        return b1 + ((s - a1) * (b2 - b1)) / (a2 - a1);
     }
 }
 

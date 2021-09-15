@@ -14,35 +14,9 @@
 #include <rg/Shader.hpp>
 #include <rg/Model.hpp>
 #include <rg/Camera.hpp>
+#include <rg/ProgramState.hpp>
 #include <rg/utils/utils.hpp>
 #include <rg/light.hpp>
-
-struct ProgramState {
-    bool imGuiEnabled = false;
-    glm::vec3 clearColor{0.5f};
-    rg::Camera camera{glm::vec3(0.0f, 0.0f, 10.0f)};
-    glm::vec3 backpackPosition{0.0f, 0.0f, 0.0f};
-    float backpackScale{1.0f};
-    bool enableMouseCameraMovement = true;
-
-    void loadFromDisk(std::string path);
-
-    void saveToDisk(std::string path) const;
-};
-
-void ProgramState::saveToDisk(std::string path) const {
-    std::ofstream out(path);
-    out << imGuiEnabled << '\n'
-        << clearColor << '\n'
-        << camera.position << '\n';
-}
-
-void ProgramState::loadFromDisk(std::string path) {
-    std::ifstream in(path);
-    if (in) {
-        in >> imGuiEnabled >> clearColor >> camera.position;
-    }
-}
 
 void framebufferSizeCallback(GLFWwindow *window, int width, int height);
 
@@ -52,11 +26,11 @@ void mouseCallback(GLFWwindow *window, double xpos, double ypos);
 
 void scrollCallback(GLFWwindow *window, double xoffset, double yoffset);
 
-void drawImGui(ProgramState *programState);
+void drawImGui();
 
 void update(GLFWwindow *window);
 
-ProgramState *programState;
+rg::ProgramState *programState;
 
 int main() {
 
@@ -69,8 +43,7 @@ int main() {
     glfwSetCursorPosCallback(window, mouseCallback);
     glfwSetScrollCallback(window, scrollCallback);
 
-    programState = new ProgramState();
-    programState->loadFromDisk("resources/programState.txt");
+    programState = rg::ProgramState::loadFromDisk("resources/programState.txt");
 
     glfwSetInputMode(window, GLFW_CURSOR, programState->imGuiEnabled ? GLFW_CURSOR_NORMAL : GLFW_CURSOR_DISABLED);
 
@@ -146,7 +119,7 @@ int main() {
         model.draw(shader);
 
         if (programState->imGuiEnabled)
-            drawImGui(programState);
+            drawImGui();
 
 
         glfwSwapBuffers(window);
@@ -190,13 +163,13 @@ void update(GLFWwindow *window) {
 }
 
 void mouseCallback(GLFWwindow *w, double xPos, double yPos) {
-    glm::vec2 mouseOffset = rg::getMouseOffset(xPos, yPos);
+    glm::vec2 mouseOffset = rg::getMouseOffset((float) xPos, (float) yPos);
     if (!programState->imGuiEnabled)
         programState->camera.rotate(mouseOffset.x, mouseOffset.y, true);
 }
 
 void scrollCallback(GLFWwindow *w, double xOffset, double yOffset) {
-    programState->camera.zoom(yOffset);
+    programState->camera.zoom((float) yOffset);
 }
 
 void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods) {
@@ -213,7 +186,7 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
     }
 }
 
-void drawImGui(ProgramState *programState) {
+void drawImGui() {
 
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
