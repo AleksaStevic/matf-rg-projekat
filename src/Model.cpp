@@ -81,7 +81,6 @@ namespace rg {
             }
         }
 
-
         aiMaterial *material = scene->mMaterials[mesh->mMaterialIndex];
 
         loadTextureMaterial(material, aiTextureType_DIFFUSE, "texture_diffuse", textures);
@@ -92,19 +91,25 @@ namespace rg {
 
         loadTextureMaterial(material, aiTextureType_HEIGHT, "texture_height", textures);
 
+//        std::cout << material->GetName().C_Str() << std::endl;
+//        for (unsigned i = 0; i < material->mNumProperties; ++i) {
+//            auto property = material->mProperties[i];
+//            auto type = property->mType;
+//            std::cout << property->mKey.C_Str() << std::endl;
+//        }
+
 
         return {vertices, indices, textures};
     }
 
     void Model::loadTextureMaterial(aiMaterial *mat, aiTextureType type, const std::string &typeName,
                                     std::vector<Texture> &textures) {
-
         for (unsigned int i = 0; i < mat->GetTextureCount(type); ++i) {
             aiString str;
             mat->GetTexture(type, i, &str);
 
             bool skip = false;
-            auto it = loaded_textures.find(str.C_Str());
+            auto it = loaded_textures.find(std::string(str.C_Str()));
             if (it != loaded_textures.end()) {
                 textures.push_back(it->second);
                 skip = true;
@@ -117,7 +122,7 @@ namespace rg {
                 texture.path = str.C_Str();
                 textures.push_back(texture);
 //                loaded_textures.push_back(texture);
-                loaded_textures[str.C_Str()] = texture;
+                loaded_textures[std::string(str.C_Str())] = texture;
             }
         }
     }

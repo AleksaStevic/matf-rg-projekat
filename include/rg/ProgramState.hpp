@@ -14,7 +14,7 @@
 namespace rg {
     struct ProgramState {
         bool imGuiEnabled = false;
-        glm::vec3 clearColor{0.5f};
+        glm::vec3 clearColor{0.1f};
         rg::Camera camera{glm::vec3(0.0f, 0.0f, 10.0f)};
         glm::vec3 backpackPosition{0.0f, 0.0f, 0.0f};
         float backpackScale{1.0f};

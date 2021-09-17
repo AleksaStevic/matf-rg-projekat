@@ -17,6 +17,7 @@
 #include <rg/ProgramState.hpp>
 #include <rg/utils/utils.hpp>
 #include <rg/light.hpp>
+#include <rg/utils/textures.hpp>
 
 void framebufferSizeCallback(GLFWwindow *window, int width, int height);
 
@@ -31,6 +32,8 @@ void drawImGui();
 void update(GLFWwindow *window);
 
 rg::ProgramState *programState;
+
+bool blinnPhong = true;
 
 int main() {
     // GLFW Init
@@ -49,12 +52,9 @@ int main() {
     programState = new rg::ProgramState();
 
     // GLFW Config
-//    glfwSetInputMode(window, GLFW_CURSOR, programState->imGuiEnabled ? GLFW_CURSOR_NORMAL : GLFW_CURSOR_DISABLED);
+    glfwSetInputMode(window, GLFW_CURSOR, programState->imGuiEnabled ? GLFW_CURSOR_NORMAL : GLFW_CURSOR_DISABLED);
     // Load GLAD
     rg::loadGlad();
-
-    // STB Image Config
-    stbi_set_flip_vertically_on_load(true);
 
     // ImGui init
     IMGUI_CHECKVERSION();
@@ -69,59 +69,143 @@ int main() {
 //    glEnable(GL_BLEND);
 //    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
+    float skyboxVertices[] = {
+            // positions
+            -1.0f, 1.0f, -1.0f,
+            -1.0f, -1.0f, -1.0f,
+            1.0f, -1.0f, -1.0f,
+            1.0f, -1.0f, -1.0f,
+            1.0f, 1.0f, -1.0f,
+            -1.0f, 1.0f, -1.0f,
+
+            -1.0f, -1.0f, 1.0f,
+            -1.0f, -1.0f, -1.0f,
+            -1.0f, 1.0f, -1.0f,
+            -1.0f, 1.0f, -1.0f,
+            -1.0f, 1.0f, 1.0f,
+            -1.0f, -1.0f, 1.0f,
+
+            1.0f, -1.0f, -1.0f,
+            1.0f, -1.0f, 1.0f,
+            1.0f, 1.0f, 1.0f,
+            1.0f, 1.0f, 1.0f,
+            1.0f, 1.0f, -1.0f,
+            1.0f, -1.0f, -1.0f,
+
+            -1.0f, -1.0f, 1.0f,
+            -1.0f, 1.0f, 1.0f,
+            1.0f, 1.0f, 1.0f,
+            1.0f, 1.0f, 1.0f,
+            1.0f, -1.0f, 1.0f,
+            -1.0f, -1.0f, 1.0f,
+
+            -1.0f, 1.0f, -1.0f,
+            1.0f, 1.0f, -1.0f,
+            1.0f, 1.0f, 1.0f,
+            1.0f, 1.0f, 1.0f,
+            -1.0f, 1.0f, 1.0f,
+            -1.0f, 1.0f, -1.0f,
+
+            -1.0f, -1.0f, -1.0f,
+            -1.0f, -1.0f, 1.0f,
+            1.0f, -1.0f, -1.0f,
+            1.0f, -1.0f, -1.0f,
+            -1.0f, -1.0f, 1.0f,
+            1.0f, -1.0f, 1.0f
+    };
+
+    unsigned int skyboxVAO, skyboxVBO;
+    glGenVertexArrays(1, &skyboxVAO);
+    glGenBuffers(1, &skyboxVBO);
+    glBindVertexArray(skyboxVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, skyboxVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(skyboxVertices), &skyboxVertices, GL_STATIC_DRAW);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *) 0);
+
+    std::vector<std::string> faces{
+            "resources/textures/cubemaps/space/right.jpg",
+            "resources/textures/cubemaps/space/left.jpg",
+            "resources/textures/cubemaps/space/up.jpg",
+            "resources/textures/cubemaps/space/down.jpg",
+            "resources/textures/cubemaps/space/front.jpg",
+            "resources/textures/cubemaps/space/back.jpg"
+    };
+    unsigned int cubemapTexture = rg::loadCubemap(faces);
+    unsigned int bumpTexture = rg::loadTexture("resources/objects/mars/Textures/Bump_2K.png");
+
     // Shaders and models and lights.
-    rg::Shader shader("resources/shaders/vertexShader.vs", "resources/shaders/fragmentShader.fs");
-    rg::Model model("resources/objects/earth/Earth 2K.obj");
-    model.setTextureNamePrefix("material.");
+    rg::Shader skyboxShader("resources/shaders/skybox.vs", "resources/shaders/skybox.fs");
+    rg::Shader shader("resources/shaders/planet.vs", "resources/shaders/planet.fs");
+    rg::Model mars("resources/objects/mars/Mars 2K.obj");
+//    rg::Model venus("resources/objects/venus/Venus_1K.obj");
+    mars.setTextureNamePrefix("material.");
+//    venus.setTextureNamePrefix("material.");
     rg::PointLight pointLight{
-            glm::vec3(4.0f, 4.0f, 0.0f),
-            glm::vec3(0.4, 0.4, 0.2),
-            glm::vec3(0.6, 0.5, 0.6),
+            glm::vec3(0.0f, 10.0f, 0.0f),
+            glm::vec3(1.0),
+            glm::vec3(1.0),
             glm::vec3(1.0f),
             1.0f,
             0.09f,
             0.032f
     };
 
+    skyboxShader.use();
+    skyboxShader.setInt("skybox", 0);
     // Loop
     while (!glfwWindowShouldClose(window)) {
 
+        // Glfw
+        int windowWidth, windowHeight;
         glfwPollEvents();
+        glfwGetWindowSize(window, &windowWidth, &windowHeight);
 
+        // Update Delta Time
         rg::updateDeltaTime();
+
+        // Update Scene
         update(window);
 
-
+        // OpenGL Clear
         glClearColor(programState->clearColor.r, programState->clearColor.g, programState->clearColor.b, 1.0);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        shader.use();
-        pointLight.position = glm::vec3(4.0f * cos(glfwGetTime()), 4.0f, 4.0f * sin(glfwGetTime()));
-//        shader.setVec3("pointLight.position", pointLight.position);
-//        shader.setVec3("pointLight.ambient", pointLight.ambient);
-//        shader.setVec3("pointLight.specular", pointLight.specular);
-//        shader.setVec3("pointLight.diffuse", pointLight.diffuse);
-//        shader.setFloat("pointLight.constant", pointLight.constant);
-//        shader.setFloat("pointLight.linear", pointLight.linear);
-//        shader.setFloat("pointLight.quadratic", pointLight.quadratic);
-        shader.setLight("pointLight", pointLight);
-        shader.setFloat("material.shininess", 32.0f);
-        shader.setVec3("viewPosition", programState->camera.position);
-
-        int windowWidth, windowHeight;
-        glfwGetWindowSize(window, &windowWidth, &windowHeight);
-
-        float windowAspectRatio = (float) windowWidth / (float) windowHeight;
-        glm::mat4 projection = programState->camera.getPerspectiveMatrix(windowAspectRatio);
+        // Render
+        glm::mat4 projection = programState->camera.getPerspectiveMatrix((float) windowWidth / (float) windowHeight);
         glm::mat4 view = programState->camera.getViewMatrix();
+
+        // Draw Skybox
+        glDepthMask(GL_FALSE);
+        skyboxShader.use();
+        skyboxShader.setMat4("view", glm::mat4(glm::mat3(view)));
+        skyboxShader.setMat4("projection", projection);
+        glBindVertexArray(skyboxVAO);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+        glBindVertexArray(0);
+        glDepthMask(GL_TRUE);
+
+        // Draw mars
+        shader.use();
+//        pointLight.position = glm::vec3(6.0f * cos(glfwGetTime()), 4.0f, 6.0f * sin(glfwGetTime()));
+        shader.setLight("pointLight", pointLight);
+        shader.setFloat("material.shininess", 1.0f);
+        shader.setVec3("viewPosition", programState->camera.position);
+        glm::mat4 model = glm::mat4(1.0f);
+//        model = glm::translate(model, programState->backpackPosition);
+//        model = glm::scale(model, glm::vec3(programState->backpackScale));
         shader.setMat4("projection", projection);
         shader.setMat4("view", view);
+        shader.setMat4("model", model);
+        mars.draw(shader);
 
-        glm::mat4 m = glm::mat4(1.0f);
-        m = glm::translate(m, programState->backpackPosition);
-        m = glm::scale(m, glm::vec3(programState->backpackScale));
-        shader.setMat4("model", m);
-        model.draw(shader);
+//        model = glm::mat4(1.0f);
+//        model = glm::translate(model, glm::vec3(5.0f, 0, 0.0f));
+//        shader.use();
+//        shader.setMat4("model", model);
+//        venus.draw(shader);
 
         if (programState->imGuiEnabled)
             drawImGui();
@@ -188,6 +272,10 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
             glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
         else
             glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    }
+
+    if (key == GLFW_KEY_B && action == GLFW_PRESS) {
+        blinnPhong = !blinnPhong;
     }
 }
 

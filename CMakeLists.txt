@@ -13,6 +13,9 @@ endfunction()
 set(CMAKE_POLICY_DEFAULT_CMP0012 NEW)
 set(CMAKE_CXX_STANDARD 14)
 
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0")
+set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -O0")
+
 list(APPEND CMAKE_CXX_FLAGS "-Wall -Wextra -Wno-unused-variable -Wno-unused-parameter -O3")
 
 file(GLOB SOURCES "src/**/*.cpp" "src/*.cpp" "src/**/*.c" "src/*.c" src/main.cpp)

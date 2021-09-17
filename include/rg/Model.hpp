@@ -20,7 +20,7 @@ namespace rg {
     class Model {
     public:
         std::vector<Mesh> meshes;
-        std::unordered_map<const char *, Texture> loaded_textures;
+        std::unordered_map<std::string, Texture> loaded_textures;
 
         std::string directory;
 
