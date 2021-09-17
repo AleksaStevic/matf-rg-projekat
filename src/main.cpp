@@ -33,9 +33,10 @@ void update(GLFWwindow *window);
 rg::ProgramState *programState;
 
 int main() {
-
-
+    // GLFW Init
     rg::glfwInit(3, 3, GLFW_OPENGL_CORE_PROFILE);
+
+    // Create Window
     GLFWwindow *window = rg::createWindow(1280, 720, "Hello Window");
     glfwMakeContextCurrent(window);
     glfwSetFramebufferSizeCallback(window, framebufferSizeCallback);
@@ -43,31 +44,35 @@ int main() {
     glfwSetCursorPosCallback(window, mouseCallback);
     glfwSetScrollCallback(window, scrollCallback);
 
-    programState = rg::ProgramState::loadFromDisk("resources/programState.txt");
+    // Program State
+//    programState = rg::ProgramState::loadFromDisk("resources/programState.txt");
+    programState = new rg::ProgramState();
 
-    glfwSetInputMode(window, GLFW_CURSOR, programState->imGuiEnabled ? GLFW_CURSOR_NORMAL : GLFW_CURSOR_DISABLED);
-
+    // GLFW Config
+//    glfwSetInputMode(window, GLFW_CURSOR, programState->imGuiEnabled ? GLFW_CURSOR_NORMAL : GLFW_CURSOR_DISABLED);
+    // Load GLAD
     rg::loadGlad();
+
+    // STB Image Config
     stbi_set_flip_vertically_on_load(true);
 
     // ImGui init
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
-    ImGuiIO &io = ImGui::GetIO();
-    (void) io;
-
+    ImGui::GetIO();
     ImGui::StyleColorsDark();
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init("#version 330 core");
 
+    // OpenGL Config
     glEnable(GL_DEPTH_TEST);
 //    glEnable(GL_BLEND);
 //    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
+    // Shaders and models and lights.
     rg::Shader shader("resources/shaders/vertexShader.vs", "resources/shaders/fragmentShader.fs");
-    rg::Model model("resources/objects/backpack/backpack.obj");
+    rg::Model model("resources/objects/earth/Earth 2K.obj");
     model.setTextureNamePrefix("material.");
-
     rg::PointLight pointLight{
             glm::vec3(4.0f, 4.0f, 0.0f),
             glm::vec3(0.4, 0.4, 0.2),
@@ -78,6 +83,7 @@ int main() {
             0.032f
     };
 
+    // Loop
     while (!glfwWindowShouldClose(window)) {
 
         glfwPollEvents();
@@ -112,9 +118,8 @@ int main() {
         shader.setMat4("view", view);
 
         glm::mat4 m = glm::mat4(1.0f);
-        m = glm::translate(m, programState->backpackPosition); // translate it down so it's at the center of the scene
-        m = glm::scale(m,
-                       glm::vec3(programState->backpackScale));    // it's a bit too big for our scene, so scale it down
+        m = glm::translate(m, programState->backpackPosition);
+        m = glm::scale(m, glm::vec3(programState->backpackScale));
         shader.setMat4("model", m);
         model.draw(shader);
 

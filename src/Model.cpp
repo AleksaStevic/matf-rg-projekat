@@ -109,13 +109,6 @@ namespace rg {
                 textures.push_back(it->second);
                 skip = true;
             }
-//            for (unsigned int j = 0; j < loaded_textures.size(); ++j) {
-//                if (std::strcmp(str.C_Str(), loaded_textures[j].path.c_str()) == 0) {
-//                    textures.push_back(loaded_textures[j]);
-//                    skip = true;
-//                    break;
-//                }
-//            }
 
             if (!skip) {
                 Texture texture;

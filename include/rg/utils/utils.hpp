@@ -38,13 +38,9 @@ namespace rg {
 
     float getWindowHeight();
 
-    float clamp(float v, float lo, float hi) {
-        return v < lo ? lo : v > hi ? hi : v;
-    }
+    float clamp(float v, float lo, float hi);
 
-    float map(float s, float a1, float a2, float b1, float b2) {
-        return b1 + ((s - a1) * (b2 - b1)) / (a2 - a1);
-    }
+    float map(float s, float a1, float a2, float b1, float b2);
 }
 
 std::ostream &operator<<(std::ostream &os, const glm::vec3 &v);
