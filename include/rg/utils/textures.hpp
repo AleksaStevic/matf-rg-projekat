@@ -14,9 +14,9 @@
 #include <rg/utils/debug.hpp>
 
 namespace rg {
-    unsigned int loadTexture(char const *path, bool flip = false);
+    unsigned int loadTexture(char const *path, bool flip = false, bool gammaCorrection = false);
 
-    unsigned int loadCubemap(const std::vector<std::string> &faces, bool flip = false);
+    unsigned int loadCubemap(const std::vector<std::string> &faces, bool flip = false, bool gammaCorrection = false);
 }
 
 #endif //MATF_RG_PROJEKAT_TEXTURES_HPP

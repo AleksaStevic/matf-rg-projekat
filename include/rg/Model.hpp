@@ -23,8 +23,9 @@ namespace rg {
         std::unordered_map<std::string, Texture> loaded_textures;
 
         std::string directory;
+        bool gammaCorrection;
 
-        explicit Model(const std::string &path);
+        explicit Model(const std::string &path, bool gammaCorrection = false);
 
         void draw(Shader &shader);
 
@@ -39,9 +40,9 @@ namespace rg {
 
         void loadTextureMaterial(aiMaterial *mat, aiTextureType type, const std::string &typeName,
                                  std::vector<Texture> &textures);
-    };
 
-    unsigned int textureFromFile(const char *filename, const std::string &directory);
+        unsigned int textureFromFile(const char *filename) const;
+    };
 }
 
 #endif //MATF_RG_PROJEKAT_MODEL_HPP

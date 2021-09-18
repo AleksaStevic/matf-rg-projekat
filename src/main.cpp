@@ -33,7 +33,44 @@ void update(GLFWwindow *window);
 
 rg::ProgramState *programState;
 
-bool blinnPhong = true;
+glm::vec3 spotLightAmbient = glm::vec3(0.0f);
+glm::vec3 spotLightDiffuse = glm::vec3(1.0f);
+glm::vec3 spotLightSpecular = glm::vec3(10.0f, 5.f, 10.f);
+
+rg::SpotLight spotLight{
+        glm::vec3(0.0f),
+        glm::vec3(0.0f),
+        spotLightAmbient,
+        spotLightDiffuse,
+        spotLightSpecular,
+        glm::cos(glm::radians(12.5f)),
+        glm::cos(glm::radians(15.0f)),
+        1.0f,
+        0.02f,
+        0.005f
+};
+
+rg::PointLight pointLight{
+        glm::vec3(0.0f, 0.0f, 0.0f),
+        glm::vec3(0.01),
+        glm::vec3(10.0),
+        glm::vec3(10.0f, 10.0f, 10.0f),
+        0.5f,
+        0.01f,
+        0.001f
+};
+
+bool hdr = true;
+bool bloom = true;
+bool spotLightEnabled;
+float exposure = 0.3f;
+
+glm::vec3 sunPosition{0.0f};
+glm::vec3 mercuryPosition{};
+glm::vec3 earthPosition{};
+
+float mercurySpeed = 0.05f;
+float earthSpeed = 0.1f;
 
 int main() {
     // GLFW Init
@@ -114,6 +151,24 @@ int main() {
             1.0f, -1.0f, 1.0f
     };
 
+    float quadVertices[] = {
+            // positions        // texture Coords
+            -1.0f, 1.0f, 0.0f, 0.0f, 1.0f,
+            -1.0f, -1.0f, 0.0f, 0.0f, 0.0f,
+            1.0f, 1.0f, 0.0f, 1.0f, 1.0f,
+            1.0f, -1.0f, 0.0f, 1.0f, 0.0f,
+    };
+    unsigned int quadVAO, quadVBO;
+    glGenVertexArrays(1, &quadVAO);
+    glGenBuffers(1, &quadVBO);
+    glBindVertexArray(quadVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), &quadVertices, GL_STATIC_DRAW);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *) 0);
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *) (3 * sizeof(float)));
+
     unsigned int skyboxVAO, skyboxVBO;
     glGenVertexArrays(1, &skyboxVAO);
     glGenBuffers(1, &skyboxVBO);
@@ -123,6 +178,47 @@ int main() {
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *) 0);
 
+    unsigned int hdrFBO;
+    glGenFramebuffers(1, &hdrFBO);
+    glBindFramebuffer(GL_FRAMEBUFFER, hdrFBO);
+    unsigned int colorBuffers[2];
+    glGenTextures(2, colorBuffers);
+    for (unsigned int i = 0; i < 2; ++i) {
+        glBindTexture(GL_TEXTURE_2D, colorBuffers[i]);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, 1280, 720, 0, GL_RGBA, GL_FLOAT, nullptr);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, GL_TEXTURE_2D, colorBuffers[i], 0);
+    }
+    unsigned int rboDepth;
+    glGenRenderbuffers(1, &rboDepth);
+    glBindRenderbuffer(GL_RENDERBUFFER, rboDepth);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, 1280, 720);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rboDepth);
+
+    unsigned int attachments[2] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1};
+    glDrawBuffers(2, attachments);
+
+    ASSERT(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE, "Framebuffer not completed.");
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    unsigned int pingpongFBO[2];
+    unsigned int pingpongColorBuffers[2];
+    glGenFramebuffers(2, pingpongFBO);
+    glGenTextures(2, pingpongColorBuffers);
+    for (unsigned int i = 0; i < 2; ++i) {
+        glBindFramebuffer(GL_FRAMEBUFFER, pingpongFBO[i]);
+        glBindTexture(GL_TEXTURE_2D, pingpongColorBuffers[i]);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, 1280, 720, 0, GL_RGBA, GL_FLOAT, nullptr);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, pingpongColorBuffers[i], 0);
+    }
+
     std::vector<std::string> faces{
             "resources/textures/cubemaps/space/right.jpg",
             "resources/textures/cubemaps/space/left.jpg",
@@ -131,28 +227,29 @@ int main() {
             "resources/textures/cubemaps/space/front.jpg",
             "resources/textures/cubemaps/space/back.jpg"
     };
-    unsigned int cubemapTexture = rg::loadCubemap(faces);
-    unsigned int bumpTexture = rg::loadTexture("resources/objects/mars/Textures/Bump_2K.png");
+    unsigned int cubemapTexture = rg::loadCubemap(faces, false, true);
 
     // Shaders and models and lights.
     rg::Shader skyboxShader("resources/shaders/skybox.vs", "resources/shaders/skybox.fs");
-    rg::Shader shader("resources/shaders/planet.vs", "resources/shaders/planet.fs");
-    rg::Model mars("resources/objects/mars/Mars 2K.obj");
-//    rg::Model venus("resources/objects/venus/Venus_1K.obj");
-    mars.setTextureNamePrefix("material.");
-//    venus.setTextureNamePrefix("material.");
-    rg::PointLight pointLight{
-            glm::vec3(0.0f, 10.0f, 0.0f),
-            glm::vec3(1.0),
-            glm::vec3(1.0),
-            glm::vec3(1.0f),
-            1.0f,
-            0.09f,
-            0.032f
-    };
+    rg::Shader planetShader("resources/shaders/planet.vs", "resources/shaders/planet.fs");
+    rg::Shader sunShader("resources/shaders/sun.vs", "resources/shaders/sun.fs");
+    rg::Shader hdrShader("resources/shaders/hdr.vs", "resources/shaders/hdr.fs");
+    rg::Shader blurShader("resources/shaders/blur.vs", "resources/shaders/blur.fs");
+
+    rg::Model earth("resources/objects/earth/scene.gltf", true);
+    rg::Model sun("resources/objects/sun/Sun.obj");
+    rg::Model mercury("resources/objects/mercury_planet/scene.gltf", true);
+    rg::Model asteroid("resources/objects/asteroid/scene.gltf", true);
 
     skyboxShader.use();
     skyboxShader.setInt("skybox", 0);
+
+    blurShader.use();
+    blurShader.setInt("image", 0);
+
+    hdrShader.use();
+    hdrShader.setInt("scene", 0);
+    hdrShader.setInt("bloomBlur", 1);
     // Loop
     while (!glfwWindowShouldClose(window)) {
 
@@ -171,12 +268,60 @@ int main() {
         glClearColor(programState->clearColor.r, programState->clearColor.g, programState->clearColor.b, 1.0);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+        glBindFramebuffer(GL_FRAMEBUFFER, hdrFBO);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         // Render
         glm::mat4 projection = programState->camera.getPerspectiveMatrix((float) windowWidth / (float) windowHeight);
         glm::mat4 view = programState->camera.getViewMatrix();
+        glm::mat4 model = glm::mat4(1.0f);
+
+        spotLight.position = programState->camera.position;
+        spotLight.direction = programState->camera.front;
+
+        // Draw planets
+        planetShader.use();
+        planetShader.setLight("pointLight", pointLight);
+        planetShader.setLight("spotLight", spotLight);
+        planetShader.setVec3("viewPos", programState->camera.position);
+        planetShader.setMat4("projection", projection);
+        planetShader.setMat4("view", view);
+
+        mercuryPosition =
+                sunPosition +
+                glm::vec3(60.0f * sin(glfwGetTime() * mercurySpeed), 0.0f, 60.0f * cos(glfwGetTime() * mercurySpeed));
+
+        earthPosition = mercuryPosition + glm::vec3(20.0f * sin(glfwGetTime() * earthSpeed), 0.0f,
+                                                    20.0f * cos(glfwGetTime() * earthSpeed));
+
+        model = glm::mat4(1.0f);
+        model = glm::translate(model, mercuryPosition);
+        planetShader.setMat4("model", model);
+        mercury.draw(planetShader);
+
+        model = glm::mat4(1.0f);
+        model = glm::translate(model, earthPosition);
+        model = glm::scale(model, glm::vec3(1.5f));
+        planetShader.use();
+        planetShader.setMat4("model", model);
+        earth.draw(planetShader);
+
+//        model = glm::mat4(1.0f);
+//        model = glm::translate(model, glm::vec3(30.f, 0.0f, 30.f));
+//        planetShader.use();
+//        planetShader.setMat4("model", model);
+//        asteroid.draw(planetShader);
+
+        // Draw sun
+        sunShader.use();
+        sunShader.setMat4("projection", projection);
+        sunShader.setMat4("view", view);
+        model = glm::mat4(1.0f);
+        sunShader.setMat4("model", model);
+        sun.draw(sunShader);
 
         // Draw Skybox
         glDepthMask(GL_FALSE);
+        glDepthFunc(GL_LEQUAL);
         skyboxShader.use();
         skyboxShader.setMat4("view", glm::mat4(glm::mat3(view)));
         skyboxShader.setMat4("projection", projection);
@@ -186,26 +331,44 @@ int main() {
         glDrawArrays(GL_TRIANGLES, 0, 36);
         glBindVertexArray(0);
         glDepthMask(GL_TRUE);
+        glDepthFunc(GL_LESS);
 
-        // Draw mars
-        shader.use();
-//        pointLight.position = glm::vec3(6.0f * cos(glfwGetTime()), 4.0f, 6.0f * sin(glfwGetTime()));
-        shader.setLight("pointLight", pointLight);
-        shader.setFloat("material.shininess", 1.0f);
-        shader.setVec3("viewPosition", programState->camera.position);
-        glm::mat4 model = glm::mat4(1.0f);
-//        model = glm::translate(model, programState->backpackPosition);
-//        model = glm::scale(model, glm::vec3(programState->backpackScale));
-        shader.setMat4("projection", projection);
-        shader.setMat4("view", view);
-        shader.setMat4("model", model);
-        mars.draw(shader);
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-//        model = glm::mat4(1.0f);
-//        model = glm::translate(model, glm::vec3(5.0f, 0, 0.0f));
-//        shader.use();
-//        shader.setMat4("model", model);
-//        venus.draw(shader);
+        bool horizontal = true;
+        bool first_iteration = true;
+        blurShader.use();
+        unsigned int amount = 10;
+        for (unsigned int i = 0; i < amount; ++i) {
+            glBindFramebuffer(GL_FRAMEBUFFER, pingpongFBO[horizontal]);
+            blurShader.setBool("horizontal", horizontal);
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, first_iteration ? colorBuffers[i] : pingpongColorBuffers[!horizontal]);
+
+            glBindVertexArray(quadVAO);
+            glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+            glBindVertexArray(0);
+
+            horizontal = !horizontal;
+            if (first_iteration) {
+                first_iteration = false;
+            }
+        }
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        hdrShader.use();
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, colorBuffers[0]);
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, pingpongColorBuffers[!horizontal]);
+        hdrShader.setBool("hdr", hdr);
+        hdrShader.setBool("bloom", bloom);
+        hdrShader.setFloat("exposure", exposure);
+
+        glBindVertexArray(quadVAO);
+        glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+        glBindVertexArray(0);
 
         if (programState->imGuiEnabled)
             drawImGui();
@@ -258,7 +421,11 @@ void mouseCallback(GLFWwindow *w, double xPos, double yPos) {
 }
 
 void scrollCallback(GLFWwindow *w, double xOffset, double yOffset) {
-    programState->camera.zoom((float) yOffset);
+//    programState->camera.zoom((float) yOffset);
+    programState->camera.movementSpeed += yOffset;
+    if (programState->camera.movementSpeed < programState->camera.baseMovementSpeed) {
+        programState->camera.movementSpeed = programState->camera.baseMovementSpeed;
+    }
 }
 
 void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods) {
@@ -275,7 +442,21 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
     }
 
     if (key == GLFW_KEY_B && action == GLFW_PRESS) {
-        blinnPhong = !blinnPhong;
+        hdr = !hdr;
+    }
+
+    if (key == GLFW_KEY_SPACE && action == GLFW_PRESS) {
+        if (spotLightEnabled) {
+            spotLight.ambient = glm::vec3(0.0f);
+            spotLight.specular = glm::vec3(0.0f);
+            spotLight.diffuse = glm::vec3(0.0f);
+            spotLightEnabled = false;
+        } else {
+            spotLight.ambient = spotLightAmbient;
+            spotLight.specular = spotLightSpecular;
+            spotLight.diffuse = spotLightDiffuse;
+            spotLightEnabled = true;
+        }
     }
 }
 

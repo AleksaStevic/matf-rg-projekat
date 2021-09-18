@@ -126,7 +126,6 @@ namespace rg {
         setFloat(name + ".constant", light.constant);
         setFloat(name + ".linear", light.linear);
         setFloat(name + ".quadratic", light.quadratic);
-        setBool(name + ".blinnPhong", light.blinnPhong);
     }
 
     void Shader::deleteProgram() {

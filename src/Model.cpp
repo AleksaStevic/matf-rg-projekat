@@ -4,7 +4,7 @@
 
 namespace rg {
 
-    Model::Model(const std::string &path) {
+    Model::Model(const std::string &path, bool gammaCorrection) : gammaCorrection(gammaCorrection) {
         loadModel(path);
     }
 
@@ -117,7 +117,7 @@ namespace rg {
 
             if (!skip) {
                 Texture texture;
-                texture.id = textureFromFile(str.C_Str(), this->directory);
+                texture.id = textureFromFile(str.C_Str());
                 texture.type = typeName;
                 texture.path = str.C_Str();
                 textures.push_back(texture);
@@ -133,7 +133,7 @@ namespace rg {
         }
     }
 
-    unsigned int textureFromFile(const char *filename, const std::string &directory) {
+    unsigned int Model::textureFromFile(const char *filename) const {
         std::string fullPath(directory + "/" + filename);
 
         unsigned int textureID;
@@ -141,29 +141,28 @@ namespace rg {
 
         int width, height, nrComponents;
         unsigned char *data = stbi_load(fullPath.c_str(), &width, &height, &nrComponents, 0);
-        if (data) {
-            GLint format;
-            if (nrComponents == 1) {
-                format = GL_RED;
-            } else if (nrComponents == 3) {
-                format = GL_RGB;
-            } else if (nrComponents == 4) {
-                format = GL_RGBA;
-            } else {
-                ASSERT(false, "Unknown texture format.");
-            }
-            glBindTexture(GL_TEXTURE_2D, textureID);
-            glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
-            glGenerateMipmap(GL_TEXTURE_2D);
+        ASSERT(data != nullptr, "Failed to load texture image");
+        GLint internalFormat;
+        GLint dataFormat;
+        if (nrComponents == 1) {
+            internalFormat = dataFormat = GL_RED;
+        } else if (nrComponents == 3) {
+            internalFormat = gammaCorrection ? GL_SRGB : GL_RGB;
+            dataFormat = GL_RGB;
+        } else if (nrComponents == 4) {
+            internalFormat = gammaCorrection ? GL_SRGB_ALPHA : GL_RGBA;
+            dataFormat = GL_RGBA;
+        } else
+            ASSERT(false,
+                   "Unknown texture format at path: " << fullPath << " Number of components: " << nrComponents);
+        glBindTexture(GL_TEXTURE_2D, textureID);
+        glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height, 0, dataFormat, GL_UNSIGNED_BYTE, data);
+        glGenerateMipmap(GL_TEXTURE_2D);
 
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-        } else {
-            ASSERT(false, "Failed to load texture image");
-        }
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         stbi_image_free(data);
         return textureID;
     }

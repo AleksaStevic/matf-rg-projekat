@@ -17,8 +17,6 @@ namespace rg {
         float constant;
         float linear;
         float quadratic;
-
-        bool blinnPhong = true;
     };
 
     struct DirLight {

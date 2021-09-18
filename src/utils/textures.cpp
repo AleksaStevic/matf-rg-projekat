@@ -1,7 +1,7 @@
 #include <rg/utils/textures.hpp>
 
 namespace rg {
-    unsigned int loadTexture(char const *path, bool flip) {
+    unsigned int loadTexture(char const *path, bool flip, bool gammaCorrection) {
         unsigned int textureID;
         glGenTextures(1, &textureID);
 
@@ -10,20 +10,21 @@ namespace rg {
         unsigned char *data = stbi_load(path, &width, &height, &nrComponents, 0);
 
         ASSERT(data != nullptr, "Texture failed to load at path: " << path);
-        GLint format;
-        if (nrComponents == 1)
-            format = GL_RED;
-        else if (nrComponents == 2)
-            format = GL_RG;
-        else if (nrComponents == 3)
-            format = GL_RGB;
-        else if (nrComponents == 4)
-            format = GL_RGBA;
-        else
+        GLint internalFormat;
+        GLint dataFormat;
+        if (nrComponents == 1) {
+            internalFormat = dataFormat = GL_RED;
+        } else if (nrComponents == 3) {
+            internalFormat = gammaCorrection ? GL_SRGB : GL_RGB;
+            dataFormat = GL_RGB;
+        } else if (nrComponents == 4) {
+            internalFormat = gammaCorrection ? GL_SRGB_ALPHA : GL_RGBA;
+            dataFormat = GL_RGBA;
+        } else
             ASSERT(false, "Unknown texture format at path: " << path << " Number of components: " << nrComponents);
 
         glBindTexture(GL_TEXTURE_2D, textureID);
-        glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
+        glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height, 0, dataFormat, GL_UNSIGNED_BYTE, data);
         glGenerateMipmap(GL_TEXTURE_2D);
 
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
@@ -36,7 +37,7 @@ namespace rg {
         return textureID;
     }
 
-    unsigned int loadCubemap(const std::vector<std::string> &faces, bool flip) {
+    unsigned int loadCubemap(const std::vector<std::string> &faces, bool flip, bool gammaCorrection) {
         unsigned int textureID;
         glGenTextures(1, &textureID);
         glBindTexture(GL_TEXTURE_CUBE_MAP, textureID);
@@ -46,7 +47,23 @@ namespace rg {
         for (unsigned int i = 0; i < faces.size(); i++) {
             unsigned char *data = stbi_load(faces[i].c_str(), &width, &height, &nrChannels, 0);
             ASSERT(data != nullptr, "Cubemap texture failed to load at path: " << faces[i]);
-            glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE,
+
+            GLint internalFormat;
+            GLint dataFormat;
+            if (nrChannels == 1) {
+                internalFormat = dataFormat = GL_RED;
+            } else if (nrChannels == 3) {
+                internalFormat = gammaCorrection ? GL_SRGB : GL_RGB;
+                dataFormat = GL_RGB;
+            } else if (nrChannels == 4) {
+                internalFormat = gammaCorrection ? GL_SRGB_ALPHA : GL_RGBA;
+                dataFormat = GL_RGBA;
+            } else
+                ASSERT(false,
+                       "Unknown texture format at path: " << faces[i] << " Number of components: " << nrChannels);
+
+            glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, internalFormat, width, height, 0, dataFormat,
+                         GL_UNSIGNED_BYTE,
                          data);
             stbi_image_free(data);
         }
