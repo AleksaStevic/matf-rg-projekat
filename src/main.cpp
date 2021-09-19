@@ -1,3 +1,4 @@
+#include <cmath>
 #include <memory>
 
 #include <imgui.h>
@@ -26,6 +27,8 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 void mouseCallback(GLFWwindow *window, double xpos, double ypos);
 
 void scrollCallback(GLFWwindow *window, double xoffset, double yoffset);
+
+std::vector<glm::vec3> circlePositions(glm::vec3 center, float radius, int number);
 
 void drawImGui();
 
@@ -62,8 +65,11 @@ rg::PointLight pointLight{
 
 bool hdr = true;
 bool bloom = true;
-bool spotLightEnabled;
+bool spotLightEnabled = true;
 float exposure = 0.3f;
+int numberOfAsteroids = 30;
+
+constexpr float PI = glm::radians(360.f);
 
 glm::vec3 sunPosition{0.0f};
 glm::vec3 mercuryPosition{};
@@ -91,7 +97,7 @@ int main() {
     programState = new rg::ProgramState();
 
     // GLFW Config
-    glfwSetInputMode(window, GLFW_CURSOR, programState->imGuiEnabled ? GLFW_CURSOR_NORMAL : GLFW_CURSOR_DISABLED);
+//    glfwSetInputMode(window, GLFW_CURSOR, programState->imGuiEnabled ? GLFW_CURSOR_NORMAL : GLFW_CURSOR_DISABLED);
     // Load GLAD
     rg::loadGlad();
 
@@ -162,9 +168,9 @@ int main() {
 //            0.0f, -1.0f, 0.0f, 0.5f, 0.5f,
 //            0.0f, 1.0f, 0.0f, 0.5f, 0.5f
             // positions, tex coords and normals
-            0.5, 0, -0.5, 0, 0, 0.5, 0.5, 0,
-            0.5, 0, 0.5, 0, 1, 0.5, 0.5, 0,
-            0, 0.5, 0, 0.5, 0.5, 0.5, 0.5, 0,
+            0.5, 0.0, -0.5, 0.0, 0.0, 0.5, 0.5, 0.0,
+            0.5, 0.0, 0.5, 0.0, 1.0, 0.5, 0.5, 0.0,
+            0.0, 0.5, 0.0, 0.5, 0.5, 0.5, 0.5, 0.0,
 
             0.5, 0, 0.5, 0, 0, 0, 0.5, 0.5,
             -0.5, 0, 0.5, 0, 1, 0, 0.5, 0.5,
@@ -196,16 +202,21 @@ int main() {
     };
 
     unsigned int asteroidIndices[] = {
-//            0, 1, 5,
-//            1, 2, 5,
-//            2, 3, 5,
-//            0, 3, 5,
-//            0, 1, 4,
-//            1, 2, 4,
-//            2, 3, 4,
-//            0, 3, 4
-            0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 21, 23
+            0, 1, 2,
+            3, 4, 5,
+            6, 7, 8,
+            9, 10, 11,
+            12, 13, 14,
+            15, 16, 17,
+            18, 19, 20,
+            21, 22, 23
     };
+
+    std::vector<glm::vec3> asteroidPositions = circlePositions(sunPosition, 30.f, numberOfAsteroids);
+    std::vector<glm::vec3> asteroidRotations(asteroidPositions.size());
+    for (unsigned int i = 0; i < asteroidPositions.size(); ++i) {
+        asteroidRotations[i] = rg::randomVec3(-1.0f, 1.0f);
+    }
 
     unsigned int asteroidVAO, asteroidVBO, asteroidEBO;
     glGenVertexArrays(1, &asteroidVAO);
@@ -400,19 +411,26 @@ int main() {
         earth.draw(planetShader);
 
         asteroidShader.use();
-        model = glm::mat4(1.0f);
-        model = glm::translate(model, glm::vec3(30.0f, 0.0f, 0.0f));
-//        model = glm::rotate(model, glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+        float interval = PI / numberOfAsteroids;
+        float radius = 30.0f;
+        for (int i = 0; i < numberOfAsteroids; ++i) {
+            model = glm::mat4(1.0f);
+            model = glm::translate(model,
+                                   glm::vec3(radius * std::sin(i * interval + glfwGetTime() * 0.2f), 0.0f,
+                                             radius * std::cos(interval * i + glfwGetTime() * 0.2f)));
+            model = glm::rotate(model, (float) glm::radians(glfwGetTime() * 20.f), asteroidRotations[i]);
 //        model = glm::scale(model, glm::vec3(5.0f));
-        asteroidShader.setMat4("model", model);
-        glBindVertexArray(asteroidVAO);
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, blackWood);
-        glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, blackWoodSpecular);
-        glDrawElements(GL_TRIANGLES, 24, GL_UNSIGNED_INT, 0);
+            asteroidShader.setMat4("model", model);
+            glBindVertexArray(asteroidVAO);
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, blackWood);
+            glActiveTexture(GL_TEXTURE1);
+            glBindTexture(GL_TEXTURE_2D, blackWoodSpecular);
+            glDrawElements(GL_TRIANGLES, 24, GL_UNSIGNED_INT, 0);
 //        glDrawArrays(GL_TRIANGLES, 0, 120);
-        glBindVertexArray(0);
+            glBindVertexArray(0);
+        }
+
 
         // Draw sun
         sunShader.use();
@@ -580,4 +598,14 @@ void drawImGui() {
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
+}
+
+std::vector<glm::vec3> circlePositions(glm::vec3 center, float radius, int number) {
+    std::vector<glm::vec3> positions;
+    float interval = PI / number;
+    for (int i = 0; i < number; ++i) {
+        positions.emplace_back(radius * std::sin(i * interval), 0.0f, radius * std::cos(interval * i));
+    }
+
+    return positions;
 }

@@ -11,6 +11,7 @@
 #include <fstream>
 #include <sstream>
 #include <cstdlib>
+#include <random>
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -34,6 +35,8 @@ namespace rg {
 
     glm::vec2 getMouseOffset(float mouseX, float mouseY);
 
+    glm::vec3 randomVec3(float min, float max);
+
     float getWindowWidth();
 
     float getWindowHeight();
@@ -41,6 +44,8 @@ namespace rg {
     float clamp(float v, float lo, float hi);
 
     float map(float s, float a1, float a2, float b1, float b2);
+
+    float random(float min, float max);
 }
 
 std::ostream &operator<<(std::ostream &os, const glm::vec3 &v);

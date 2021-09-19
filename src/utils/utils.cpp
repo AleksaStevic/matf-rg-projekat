@@ -10,6 +10,9 @@ namespace rg {
     float deltaTime{};
     float lastFrame{};
 
+    std::random_device rand_dev;
+    std::mt19937 generator(rand_dev());
+
     std::string readFileContents(std::string path) {
         std::ifstream in(path);
         std::stringstream buffer;
@@ -75,6 +78,19 @@ namespace rg {
 
     float map(float s, float a1, float a2, float b1, float b2) {
         return b1 + ((s - a1) * (b2 - b1)) / (a2 - a1);
+    }
+
+
+    float random(float min, float max) {
+        std::uniform_real_distribution<float> distr(min, max);
+
+        return distr(generator);
+    }
+
+    glm::vec3 randomVec3(float min, float max) {
+        std::uniform_real_distribution<float> distr(min, max);
+
+        return {distr(generator), distr(generator), distr(generator)};
     }
 }
 

@@ -48,6 +48,7 @@ vec3 CalcSpotLight(SpotLight light, vec3 lightPos, vec3 fragPos, vec3 viewPos, v
 void main() {
     vec3 color = CalcPointLight(pointLight, pointLight.position, fs_in.FragPos, viewPos, fs_in.Normal, fs_in.TexCoords, diffuseMap, specularMap, 32.0f);
     color += CalcSpotLight(spotLight, spotLight.position, fs_in.FragPos, viewPos, fs_in.Normal, fs_in.TexCoords, diffuseMap, specularMap, 32.0f);
+    //    vec3 color = texture(diffuseMap, fs_in.TexCoords).rgb;
     FragColor = vec4(color, 1.0f);
     float brightness = dot(color, vec3(0.2126, 0.7152, 0.0722));
     if (brightness > 1.0) {
