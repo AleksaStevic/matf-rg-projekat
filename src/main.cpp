@@ -10,12 +10,10 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
-#include <stb_image.h>
 
 #include <rg/Shader.hpp>
 #include <rg/Model.hpp>
 #include <rg/Camera.hpp>
-#include <rg/ProgramState.hpp>
 #include <rg/utils/utils.hpp>
 #include <rg/light.hpp>
 #include <rg/utils/textures.hpp>
