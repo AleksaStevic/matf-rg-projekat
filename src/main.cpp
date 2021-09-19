@@ -63,7 +63,7 @@ bool hdr = true;
 bool bloom = true;
 bool spotLightEnabled = true;
 float exposure = 1.0f;
-int numberOfAsteroids = 30;
+int numberOfAsteroids = 50;
 int effect = 0;
 
 constexpr float PI = glm::radians(360.f);
@@ -154,14 +154,6 @@ int main() {
     };
 
     float asteroidVertices[] = {
-//            // positions          tex coords
-//            0.5f, 0.0f, -0.5f, 0.0f, 1.0f,
-//            0.5f, 0.0f, 0.5f, 1.0f, 1.0f,
-//            -0.5f, 0.0f, 0.5f, 1.0f, 0.0f,
-//            -0.5f, 0.0f, -0.5f, 0.0f, 0.0f,
-//            0.0f, -1.0f, 0.0f, 0.5f, 0.5f,
-//            0.0f, 1.0f, 0.0f, 0.5f, 0.5f
-            // positions, tex coords and normals
             0.5, 0.0, -0.5, 0.0, 0.0, 0.5, 0.5, 0.0,
             0.5, 0.0, 0.5, 0.0, 1.0, 0.5, 0.5, 0.0,
             0.0, 0.5, 0.0, 0.5, 0.5, 0.5, 0.5, 0.0,

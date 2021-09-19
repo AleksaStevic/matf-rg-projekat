@@ -17,8 +17,8 @@ void main() {
 
     if (effect == 1) {
         vec3 color = texture(screenTexture, TexCoords).rgb;
-        float average = (color.r + color.g + color.b) / 3.0f;
-        FragColor = vec4(average, average, average, 1.0f);
+        float avg = (dot(color, vec3(0.2126, 0.7152, 0.0722))) / 3;
+        FragColor = vec4(avg, avg, avg, 1.0f);
         return;
     }
 
