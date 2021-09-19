@@ -31,8 +31,8 @@ void drawImGui();
 void update(GLFWwindow *window);
 
 glm::vec3 spotLightAmbient = glm::vec3(0.0f);
-glm::vec3 spotLightDiffuse = glm::vec3(1.0f);
-glm::vec3 spotLightSpecular = glm::vec3(10.0f, 5.f, 10.f);
+glm::vec3 spotLightDiffuse = glm::vec3(5.f, 3.f, 6.f);
+glm::vec3 spotLightSpecular = glm::vec3(6.0f, 3.f, 7.f);
 
 rg::SpotLight spotLight{
         glm::vec3(0.0f),
