@@ -68,9 +68,11 @@ float exposure = 0.3f;
 glm::vec3 sunPosition{0.0f};
 glm::vec3 mercuryPosition{};
 glm::vec3 earthPosition{};
+glm::vec3 jupiterPosition{};
 
 float mercurySpeed = 0.05f;
 float earthSpeed = 0.1f;
+float jupiterSpeed = 0.05f;
 
 int main() {
     // GLFW Init
@@ -151,6 +153,79 @@ int main() {
             1.0f, -1.0f, 1.0f
     };
 
+    float asteroidVertices[] = {
+//            // positions          tex coords
+//            0.5f, 0.0f, -0.5f, 0.0f, 1.0f,
+//            0.5f, 0.0f, 0.5f, 1.0f, 1.0f,
+//            -0.5f, 0.0f, 0.5f, 1.0f, 0.0f,
+//            -0.5f, 0.0f, -0.5f, 0.0f, 0.0f,
+//            0.0f, -1.0f, 0.0f, 0.5f, 0.5f,
+//            0.0f, 1.0f, 0.0f, 0.5f, 0.5f
+            // positions, tex coords and normals
+            0.5, 0, -0.5, 0, 0, 0.5, 0.5, 0,
+            0.5, 0, 0.5, 0, 1, 0.5, 0.5, 0,
+            0, 0.5, 0, 0.5, 0.5, 0.5, 0.5, 0,
+
+            0.5, 0, 0.5, 0, 0, 0, 0.5, 0.5,
+            -0.5, 0, 0.5, 0, 1, 0, 0.5, 0.5,
+            0, 0.5, 0, 0.5, 0.5, 0, 0.5, 0.5,
+
+            -0.5, 0, 0.5, 0, 0, -0.5, 0.5, 0,
+            -0.5, 0, -0.5, 0, 1, -0.5, 0.5, 0,
+            0, 0.5, 0, 0.5, 0.5, -0.5, 0.5, 0,
+
+            0.5, 0, -0.5, 0, 1, 0, 0.5, -0.5,
+            -0.5, 0, -0.5, 0, 0, 0, 0.5, -0.5,
+            0, 0.5, 0, 0.5, 0.5, 0, 0.5, -0.5,
+
+            0.5, 0, -0.5, 0, 0, 0.5, -0.5, 0,
+            0.5, 0, 0.5, 0, 1, 0.5, -0.5, 0,
+            0, -0.5, 0, 0.5, 0.5, 0.5, -0.5, 0,
+
+            0.5, 0, 0.5, 0, 0, 0, -0.5, 0.5,
+            -0.5, 0, 0.5, 0, 1, 0, -0.5, 0.5,
+            0, -0.5, 0, 0.5, 0.5, 0, -0.5, 0.5,
+
+            -0.5, 0, 0.5, 0, 0, -0.5, -0.5, 0,
+            -0.5, 0, -0.5, 0, 1, -0.5, -0.5, 0,
+            0, -0.5, 0, 0.5, 0.5, -0.5, -0.5, 0,
+
+            0.5, 0, -0.5, 0, 1, 0, -0.5, -0.5,
+            -0.5, 0, -0.5, 0, 0, 0, -0.5, -0.5,
+            0, -0.5, 0, 0.5, 0.5, 0, -0.5, -0.5,
+    };
+
+    unsigned int asteroidIndices[] = {
+//            0, 1, 5,
+//            1, 2, 5,
+//            2, 3, 5,
+//            0, 3, 5,
+//            0, 1, 4,
+//            1, 2, 4,
+//            2, 3, 4,
+//            0, 3, 4
+            0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 21, 23
+    };
+
+    unsigned int asteroidVAO, asteroidVBO, asteroidEBO;
+    glGenVertexArrays(1, &asteroidVAO);
+    glGenBuffers(1, &asteroidVBO);
+    glGenBuffers(1, &asteroidEBO);
+    glBindVertexArray(asteroidVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, asteroidVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(asteroidVertices), asteroidVertices, GL_STATIC_DRAW);
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, asteroidEBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(asteroidIndices), asteroidIndices, GL_STATIC_DRAW);
+
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *) 0);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *) (3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *) (5 * sizeof(float)));
+    glEnableVertexAttribArray(2);
+//    glBindVertexArray(0);
+
     float quadVertices[] = {
             // positions        // texture Coords
             -1.0f, 1.0f, 0.0f, 0.0f, 1.0f,
@@ -228,6 +303,8 @@ int main() {
             "resources/textures/cubemaps/space/back.jpg"
     };
     unsigned int cubemapTexture = rg::loadCubemap(faces, false, true);
+    unsigned int blackWood = rg::loadTexture("resources/textures/black_wood.jpg", true, true);
+    unsigned int blackWoodSpecular = rg::loadTexture("resources/textures/black_wood_specular.jpg", true, true);
 
     // Shaders and models and lights.
     rg::Shader skyboxShader("resources/shaders/skybox.vs", "resources/shaders/skybox.fs");
@@ -235,11 +312,12 @@ int main() {
     rg::Shader sunShader("resources/shaders/sun.vs", "resources/shaders/sun.fs");
     rg::Shader hdrShader("resources/shaders/hdr.vs", "resources/shaders/hdr.fs");
     rg::Shader blurShader("resources/shaders/blur.vs", "resources/shaders/blur.fs");
+    rg::Shader asteroidShader("resources/shaders/asteroid.vs", "resources/shaders/asteroid.fs");
 
     rg::Model earth("resources/objects/earth/scene.gltf", true);
     rg::Model sun("resources/objects/sun/Sun.obj");
     rg::Model mercury("resources/objects/mercury_planet/scene.gltf", true);
-    rg::Model asteroid("resources/objects/asteroid/scene.gltf", true);
+//    rg::Model asteroid("resources/objects/asteroid/scene.gltf", true);
 
     skyboxShader.use();
     skyboxShader.setInt("skybox", 0);
@@ -250,6 +328,10 @@ int main() {
     hdrShader.use();
     hdrShader.setInt("scene", 0);
     hdrShader.setInt("bloomBlur", 1);
+
+    asteroidShader.use();
+    asteroidShader.setInt("diffuseMap", 0);
+    asteroidShader.setInt("specularMap", 1);
     // Loop
     while (!glfwWindowShouldClose(window)) {
 
@@ -278,7 +360,7 @@ int main() {
         spotLight.position = programState->camera.position;
         spotLight.direction = programState->camera.front;
 
-        // Draw planets
+        // Setup Shaders
         planetShader.use();
         planetShader.setLight("pointLight", pointLight);
         planetShader.setLight("spotLight", spotLight);
@@ -286,35 +368,54 @@ int main() {
         planetShader.setMat4("projection", projection);
         planetShader.setMat4("view", view);
 
-        mercuryPosition =
-                sunPosition +
-                glm::vec3(60.0f * sin(glfwGetTime() * mercurySpeed), 0.0f, 60.0f * cos(glfwGetTime() * mercurySpeed));
+        asteroidShader.use();
+        asteroidShader.setLight("pointLight", pointLight);
+        asteroidShader.setLight("spotLight", spotLight);
+        asteroidShader.setVec3("viewPos", programState->camera.position);
+        asteroidShader.setMat4("projection", projection);
+        asteroidShader.setMat4("view", view);
+
+        sunShader.use();
+        sunShader.setMat4("projection", projection);
+        sunShader.setMat4("view", view);
+
+        mercuryPosition = sunPosition + glm::vec3(60.0f * sin(glfwGetTime() * mercurySpeed), 0.0f,
+                                                  60.0f * cos(glfwGetTime() * mercurySpeed));
+
+//        jupiterPosition = sunPosition + glm::vec3(0.0f, 0.0f, glfwGetTime());
 
         earthPosition = mercuryPosition + glm::vec3(20.0f * sin(glfwGetTime() * earthSpeed), 0.0f,
                                                     20.0f * cos(glfwGetTime() * earthSpeed));
-
+        planetShader.use();
         model = glm::mat4(1.0f);
         model = glm::translate(model, mercuryPosition);
         planetShader.setMat4("model", model);
         mercury.draw(planetShader);
 
+        planetShader.use();
         model = glm::mat4(1.0f);
         model = glm::translate(model, earthPosition);
         model = glm::scale(model, glm::vec3(1.5f));
-        planetShader.use();
         planetShader.setMat4("model", model);
         earth.draw(planetShader);
 
-//        model = glm::mat4(1.0f);
-//        model = glm::translate(model, glm::vec3(30.f, 0.0f, 30.f));
-//        planetShader.use();
-//        planetShader.setMat4("model", model);
-//        asteroid.draw(planetShader);
+        asteroidShader.use();
+        model = glm::mat4(1.0f);
+        model = glm::translate(model, glm::vec3(30.0f, 0.0f, 0.0f));
+//        model = glm::rotate(model, glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+//        model = glm::scale(model, glm::vec3(5.0f));
+        asteroidShader.setMat4("model", model);
+        glBindVertexArray(asteroidVAO);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, blackWood);
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, blackWoodSpecular);
+        glDrawElements(GL_TRIANGLES, 24, GL_UNSIGNED_INT, 0);
+//        glDrawArrays(GL_TRIANGLES, 0, 120);
+        glBindVertexArray(0);
 
         // Draw sun
         sunShader.use();
-        sunShader.setMat4("projection", projection);
-        sunShader.setMat4("view", view);
         model = glm::mat4(1.0f);
         sunShader.setMat4("model", model);
         sun.draw(sunShader);

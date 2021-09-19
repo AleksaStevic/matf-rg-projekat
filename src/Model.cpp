@@ -91,6 +91,10 @@ namespace rg {
 
         loadTextureMaterial(material, aiTextureType_HEIGHT, "texture_height", textures);
 
+        loadTextureMaterial(material, aiTextureType_AMBIENT, "texture_ambient", textures);
+
+        loadTextureMaterial(material, aiTextureType_EMISSIVE, "texture_emissive", textures);
+
 //        std::cout << material->GetName().C_Str() << std::endl;
 //        for (unsigned i = 0; i < material->mNumProperties; ++i) {
 //            auto property = material->mProperties[i];
