@@ -20,7 +20,6 @@ namespace rg {
     public:
         float fov = 45.f;
         float movementSpeed = 3.f;
-        float baseMovementSpeed = 3.f;
         float yaw = -90.0f;
         float pitch = 0.0f;
         float mouseSensitivity = 0.2f;

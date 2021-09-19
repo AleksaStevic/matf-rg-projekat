@@ -28,13 +28,9 @@ void mouseCallback(GLFWwindow *window, double xpos, double ypos);
 
 void scrollCallback(GLFWwindow *window, double xoffset, double yoffset);
 
-std::vector<glm::vec3> circlePositions(glm::vec3 center, float radius, int number);
-
 void drawImGui();
 
 void update(GLFWwindow *window);
-
-rg::ProgramState *programState;
 
 glm::vec3 spotLightAmbient = glm::vec3(0.0f);
 glm::vec3 spotLightDiffuse = glm::vec3(1.0f);
@@ -66,19 +62,21 @@ rg::PointLight pointLight{
 bool hdr = true;
 bool bloom = true;
 bool spotLightEnabled = true;
-float exposure = 0.3f;
+float exposure = 1.0f;
 int numberOfAsteroids = 30;
+int effect = 0;
 
 constexpr float PI = glm::radians(360.f);
 
 glm::vec3 sunPosition{0.0f};
 glm::vec3 mercuryPosition{};
 glm::vec3 earthPosition{};
-glm::vec3 jupiterPosition{};
 
 float mercurySpeed = 0.05f;
 float earthSpeed = 0.1f;
-float jupiterSpeed = 0.05f;
+float cameraDefaultSpeed = 3.f;
+
+rg::Camera camera{glm::vec3(0.0f, 0.0f, 10.0f)};
 
 int main() {
     // GLFW Init
@@ -92,12 +90,8 @@ int main() {
     glfwSetCursorPosCallback(window, mouseCallback);
     glfwSetScrollCallback(window, scrollCallback);
 
-    // Program State
-//    programState = rg::ProgramState::loadFromDisk("resources/programState.txt");
-    programState = new rg::ProgramState();
-
     // GLFW Config
-//    glfwSetInputMode(window, GLFW_CURSOR, programState->imGuiEnabled ? GLFW_CURSOR_NORMAL : GLFW_CURSOR_DISABLED);
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     // Load GLAD
     rg::loadGlad();
 
@@ -311,6 +305,20 @@ int main() {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, pingpongColorBuffers[i], 0);
     }
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    unsigned int screenFBO;
+    unsigned int screenColorBuffer;
+    glGenFramebuffers(1, &screenFBO);
+    glGenTextures(1, &screenColorBuffer);
+    glBindFramebuffer(GL_FRAMEBUFFER, screenFBO);
+    glBindTexture(GL_TEXTURE_2D, screenColorBuffer);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, 1280, 720, 0, GL_RGBA, GL_FLOAT, nullptr);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, screenColorBuffer, 0);
 
     std::vector<std::string> faces{
             "resources/textures/cubemaps/space/right.jpg",
@@ -331,6 +339,7 @@ int main() {
     rg::Shader hdrShader("resources/shaders/hdr.vs", "resources/shaders/hdr.fs");
     rg::Shader blurShader("resources/shaders/blur.vs", "resources/shaders/blur.fs");
     rg::Shader asteroidShader("resources/shaders/asteroid.vs", "resources/shaders/asteroid.fs");
+    rg::Shader screenShader("resources/shaders/screen.vs", "resources/shaders/screen.fs");
 
     rg::Model earth("resources/objects/earth/scene.gltf", true);
     rg::Model sun("resources/objects/sun/Sun.obj");
@@ -350,6 +359,9 @@ int main() {
     asteroidShader.use();
     asteroidShader.setInt("diffuseMap", 0);
     asteroidShader.setInt("specularMap", 1);
+
+    screenShader.use();
+    screenShader.setInt("screenTexture", 0);
     // Loop
     while (!glfwWindowShouldClose(window)) {
 
@@ -365,31 +377,31 @@ int main() {
         update(window);
 
         // OpenGL Clear
-        glClearColor(programState->clearColor.r, programState->clearColor.g, programState->clearColor.b, 1.0);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+//        glClearColor(programState->clearColor.r, programState->clearColor.g, programState->clearColor.b, 1.0);
+//        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         glBindFramebuffer(GL_FRAMEBUFFER, hdrFBO);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         // Render
-        glm::mat4 projection = programState->camera.getPerspectiveMatrix((float) windowWidth / (float) windowHeight);
-        glm::mat4 view = programState->camera.getViewMatrix();
+        glm::mat4 projection = camera.getPerspectiveMatrix((float) windowWidth / (float) windowHeight);
+        glm::mat4 view = camera.getViewMatrix();
         glm::mat4 model = glm::mat4(1.0f);
 
-        spotLight.position = programState->camera.position;
-        spotLight.direction = programState->camera.front;
+        spotLight.position = camera.position;
+        spotLight.direction = camera.front;
 
         // Setup Shaders
         planetShader.use();
         planetShader.setLight("pointLight", pointLight);
         planetShader.setLight("spotLight", spotLight);
-        planetShader.setVec3("viewPos", programState->camera.position);
+        planetShader.setVec3("viewPos", camera.position);
         planetShader.setMat4("projection", projection);
         planetShader.setMat4("view", view);
 
         asteroidShader.use();
         asteroidShader.setLight("pointLight", pointLight);
         asteroidShader.setLight("spotLight", spotLight);
-        asteroidShader.setVec3("viewPos", programState->camera.position);
+        asteroidShader.setVec3("viewPos", camera.position);
         asteroidShader.setMat4("projection", projection);
         asteroidShader.setMat4("view", view);
 
@@ -424,8 +436,8 @@ int main() {
             std::tie(rRadius, ry) = asteroidValues[i];
             model = glm::mat4(1.0f);
             model = glm::translate(model,
-                                   glm::vec3(rRadius * std::sin(i * interval + glfwGetTime() * 0.2f), ry,
-                                             rRadius * std::cos(interval * i + glfwGetTime() * 0.2f)));
+                                   glm::vec3(rRadius * std::sin(i * interval + glfwGetTime() * 0.1f), ry,
+                                             rRadius * std::cos(interval * i + glfwGetTime() * 0.1f)));
             model = glm::rotate(model, (float) glm::radians(glfwGetTime() * 20.f), asteroidRotations[i]);
 //        model = glm::scale(model, glm::vec3(5.0f));
             asteroidShader.setMat4("model", model);
@@ -481,8 +493,8 @@ int main() {
                 first_iteration = false;
             }
         }
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
+        glBindFramebuffer(GL_FRAMEBUFFER, screenFBO);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         hdrShader.use();
         glActiveTexture(GL_TEXTURE0);
@@ -497,8 +509,19 @@ int main() {
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
         glBindVertexArray(0);
 
-        if (programState->imGuiEnabled)
-            drawImGui();
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        screenShader.use();
+        screenShader.setInt("effect", effect);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, screenColorBuffer);
+
+        glBindVertexArray(quadVAO);
+        glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+        glBindVertexArray(0);
+
+
+//        drawImGui();
 
 
         glfwSwapBuffers(window);
@@ -511,8 +534,6 @@ int main() {
     ImGui::DestroyContext();
 
     glfwTerminate();
-    programState->saveToDisk("resources/programState.txt");
-    delete programState;
     return 0;
 }
 
@@ -525,33 +546,31 @@ void update(GLFWwindow *window) {
     const float deltaTime = rg::getDeltaTime();
 
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
-        programState->camera.move(rg::FORWARD, deltaTime);
+        camera.move(rg::FORWARD, deltaTime);
     }
 
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
-        programState->camera.move(rg::BACKWARD, deltaTime);
+        camera.move(rg::BACKWARD, deltaTime);
     }
 
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
-        programState->camera.move(rg::RIGHT, deltaTime);
+        camera.move(rg::RIGHT, deltaTime);
     }
 
     if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
-        programState->camera.move(rg::LEFT, deltaTime);
+        camera.move(rg::LEFT, deltaTime);
     }
 }
 
 void mouseCallback(GLFWwindow *w, double xPos, double yPos) {
     glm::vec2 mouseOffset = rg::getMouseOffset((float) xPos, (float) yPos);
-    if (!programState->imGuiEnabled)
-        programState->camera.rotate(mouseOffset.x, mouseOffset.y, true);
+    camera.rotate(mouseOffset.x, mouseOffset.y, true);
 }
 
 void scrollCallback(GLFWwindow *w, double xOffset, double yOffset) {
-//    programState->camera.zoom((float) yOffset);
-    programState->camera.movementSpeed += yOffset;
-    if (programState->camera.movementSpeed < programState->camera.baseMovementSpeed) {
-        programState->camera.movementSpeed = programState->camera.baseMovementSpeed;
+    camera.movementSpeed += yOffset;
+    if (camera.movementSpeed < cameraDefaultSpeed) {
+        camera.movementSpeed = cameraDefaultSpeed;
     }
 }
 
@@ -560,16 +579,16 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
         glfwSetWindowShouldClose(window, true);
     }
 
-    if (key == GLFW_KEY_F1 && action == GLFW_PRESS) {
-        programState->imGuiEnabled = !programState->imGuiEnabled;
-        if (programState->imGuiEnabled)
-            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-        else
-            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    if (key == GLFW_KEY_H && action == GLFW_PRESS) {
+        hdr = !hdr;
     }
 
     if (key == GLFW_KEY_B && action == GLFW_PRESS) {
-        hdr = !hdr;
+        bloom = !bloom;
+    }
+
+    if (key >= GLFW_KEY_0 && key <= GLFW_KEY_3 && action == GLFW_PRESS) {
+        effect = key - GLFW_KEY_0;
     }
 
     if (key == GLFW_KEY_SPACE && action == GLFW_PRESS) {
@@ -596,9 +615,6 @@ void drawImGui() {
     {
         ImGui::Begin("Text Window");
         ImGui::Text("Hello World!");
-        ImGui::DragFloat3("Backpack position", (float *) &programState->backpackPosition, 0.05f);
-        ImGui::DragFloat("Backpack scale", &programState->backpackScale, 0.05f, 0.0, 4.0);
-        ImGui::ColorEdit3("Background color", (float *) &programState->clearColor);
         ImGui::End();
     }
 
@@ -606,14 +622,4 @@ void drawImGui() {
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
-}
-
-std::vector<glm::vec3> circlePositions(glm::vec3 center, float radius, int number) {
-    std::vector<glm::vec3> positions;
-    float interval = PI / number;
-    for (int i = 0; i < number; ++i) {
-        positions.emplace_back(radius * std::sin(i * interval), 0.0f, radius * std::cos(interval * i));
-    }
-
-    return positions;
 }
