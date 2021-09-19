@@ -334,7 +334,6 @@ int main() {
     rg::Model earth("resources/objects/earth/scene.gltf", true);
     rg::Model sun("resources/objects/sun/Sun.obj");
     rg::Model mercury("resources/objects/mercury_planet/scene.gltf", true);
-//    rg::Model asteroid("resources/objects/asteroid/scene.gltf", true);
 
     skyboxShader.use();
     skyboxShader.setInt("skybox", 0);
