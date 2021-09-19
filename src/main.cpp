@@ -212,10 +212,17 @@ int main() {
             21, 22, 23
     };
 
-    std::vector<glm::vec3> asteroidPositions = circlePositions(sunPosition, 30.f, numberOfAsteroids);
-    std::vector<glm::vec3> asteroidRotations(asteroidPositions.size());
-    for (unsigned int i = 0; i < asteroidPositions.size(); ++i) {
-        asteroidRotations[i] = rg::randomVec3(-1.0f, 1.0f);
+    std::vector<glm::vec3> asteroidRotations(numberOfAsteroids);
+    for (auto &v: asteroidRotations) {
+        v = rg::randomVec3(-1.0f, 1.0f);
+    }
+
+    std::vector<std::pair<float, float>> asteroidValues(numberOfAsteroids);
+    for (auto &v: asteroidValues) {
+        float rRadius = rg::random(-2.f, 2.f) + 30.0f;
+        float ry = rg::random(-2.f, 2.f);
+        v.first = rRadius;
+        v.second = ry;
     }
 
     unsigned int asteroidVAO, asteroidVBO, asteroidEBO;
@@ -412,12 +419,13 @@ int main() {
 
         asteroidShader.use();
         float interval = PI / numberOfAsteroids;
-        float radius = 30.0f;
         for (int i = 0; i < numberOfAsteroids; ++i) {
+            float rRadius, ry;
+            std::tie(rRadius, ry) = asteroidValues[i];
             model = glm::mat4(1.0f);
             model = glm::translate(model,
-                                   glm::vec3(radius * std::sin(i * interval + glfwGetTime() * 0.2f), 0.0f,
-                                             radius * std::cos(interval * i + glfwGetTime() * 0.2f)));
+                                   glm::vec3(rRadius * std::sin(i * interval + glfwGetTime() * 0.2f), ry,
+                                             rRadius * std::cos(interval * i + glfwGetTime() * 0.2f)));
             model = glm::rotate(model, (float) glm::radians(glfwGetTime() * 20.f), asteroidRotations[i]);
 //        model = glm::scale(model, glm::vec3(5.0f));
             asteroidShader.setMat4("model", model);
