@@ -4,6 +4,8 @@
 
 `SPACE` - iskljuci/ukljuci lampu
 
+`mouse scroll` - povecaj/smanji brzinu kretanja kamere
+
 `B` - iskljuci/ukljuci bloom
 
 `H` - iskljuci/ukljuci HDR
